@@ -211,7 +211,7 @@ export function updatePhysics(
     if (input.moveY === -1 || input.jumpPressed) {
       // Climb up cleanly onto ledge top
       const climbX = p.x + p.onLedge * 8;
-      const climbY = p.y - PLAYER_PHYSICS.STAND_H + 2;
+      const climbY = p.y - PLAYER_PHYSICS.STAND_H;
       if (canStandUpAt(state, climbX, climbY)) {
         p.x = climbX;
         p.y = climbY;

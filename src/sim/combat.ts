@@ -590,8 +590,8 @@ export function damageEnemy(
     if (opts?.armorBreak) {
       enemy.shielded = false;
       enemy.stunTimer = Math.max(enemy.stunTimer, hasFrameAmp ? 165 : 120);
-      // Spawn a grabbable broken shield projectile
-      spawnProjectile(state, {
+      // Spawn a grabbable broken shield projectile (damage=0 while unthrown; throwHeldObject sets 5 dmg)
+      const droppedShield = spawnProjectile(state, {
         owner: 'thrown',
         kind: 'thrown_shield',
         x: cx - 6,
@@ -600,12 +600,13 @@ export function damageEnemy(
         vy: -3.2,
         w: 12,
         h: 16,
-        damage: HOOKSHOT_CONSTANTS.THROW_COLLISION_DAMAGE,
+        damage: 0,
         ttl: 360,
         pierce: false,
         bouncesLeft: 2,
         color: '#38bdf8',
       });
+      droppedShield.hitIds.push(enemy.id);
       state.hitstopTicks = Math.max(state.hitstopTicks, 4);
       state.camera.shakeTimer = Math.max(state.camera.shakeTimer, 6);
       state.camera.shakeIntensity = Math.max(state.camera.shakeIntensity, 2);
@@ -1151,7 +1152,10 @@ export function stepCombat(
       const hit = damageEnemy(state, enemy, dmg, {
         armorBreak: spec.armorBreak,
         knockbackX: spec.knockbackX,
-        knockbackY: spec.knockbackY,
+        knockbackY:
+          spec.id === 'diveKick' || spec.id === 'diveKickHeavy'
+            ? 0
+            : spec.knockbackY,
         sourceX: p.x + p.w * 0.5,
         freezeTicks: spec.freezeTicks,
         onEnemyDefeated: hooks?.onEnemyDefeated,
@@ -1192,6 +1196,7 @@ export function stepCombat(
       if (spec.id === 'diveKick' || spec.id === 'diveKickHeavy') {
         p.vy = spec.id === 'diveKickHeavy' ? -5.0 : -4.4;
         p.vx = -p.facing * 1.4;
+        p.invulnTimer = Math.max(p.invulnTimer, 8);
         p.airJumpsUsed = 0;
         p.diveKickTicks = 0;
         p.attackId = null;
@@ -1448,7 +1453,7 @@ export function stepProjectiles(state: SimState, hooks?: CombatHooks): void {
       proj.y = ry.y;
 
       const isDroppedShield =
-        proj.kind === 'thrown_shield' && speedMag < 4.5 && proj.bouncesLeft <= 2;
+        proj.kind === 'thrown_shield' && proj.damage <= 0;
 
       if (rx.hitX || ry.hitY) {
         if (proj.kind === 'thrown_barrel' && speedMag >= 2.2) {
@@ -1491,8 +1496,8 @@ export function stepProjectiles(state: SimState, hooks?: CombatHooks): void {
         }
       }
 
-      // Check thrown collisions with enemies & boss when moving fast enough
-      if (!remove && speedMag >= 2.0) {
+      // Check thrown collisions with enemies & boss when moving fast enough (never for unthrown dropped shields)
+      if (!remove && !isDroppedShield && speedMag >= 2.0) {
         shatterBreakablesInBox(state, proj);
 
         for (let j = 0; j < state.enemies.length; j++) {
@@ -1612,6 +1617,11 @@ export function stepProjectiles(state: SimState, hooks?: CombatHooks): void {
             knockbackY: -1.8,
             sourceX: proj.x + proj.w * 0.5,
             freezeTicks: 2,
+            isBurst:
+              proj.kind === 'burst_beam' ||
+              proj.kind === 'shockwave' ||
+              proj.kind === 'electric_arc' ||
+              proj.kind === 'dive_beam',
             onEnemyDefeated: hooks?.onEnemyDefeated,
           });
           if (!proj.pierce) {
