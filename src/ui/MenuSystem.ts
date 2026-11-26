@@ -144,6 +144,32 @@ const MODIFIER_SPECS: readonly { key: keyof CustomModifiers; label: string; desc
   { key: 'mirrorWorld', label: 'Mirror World', desc: 'Flipped horizontal stage discipline' },
 ];
 
+const COMPENDIUM_FILTERS: readonly { id: 'all' | DataChipDefinition['category']; label: string }[] = [
+  { id: 'all', label: 'ALL' },
+  { id: 'enemy', label: 'ENEMY' },
+  { id: 'boss', label: 'BOSS' },
+  { id: 'hero', label: 'HERO' },
+  { id: 'world', label: 'WORLD' },
+  { id: 'tech', label: 'TECH' },
+];
+
+const CHALLENGE_FILTERS: readonly { id: 'all' | ChallengeDefinition['category']; label: string }[] = [
+  { id: 'all', label: 'ALL' },
+  { id: 'combat', label: 'COMBAT' },
+  { id: 'movement', label: 'MOVEMENT' },
+  { id: 'boss', label: 'BOSS' },
+  { id: 'collectible', label: 'COLLECTIBLE' },
+  { id: 'mode', label: 'MODE' },
+];
+
+const COMPENDIUM_CAT_COLORS: Readonly<Record<DataChipDefinition['category'], string>> = {
+  enemy: '#ff6b81',
+  boss: '#ffd166',
+  hero: '#5ce1ff',
+  world: '#4dffb5',
+  tech: '#c084fc',
+};
+
 function escapeHtml(text: string): string {
   return text
     .replace(/&/g, '&amp;')
@@ -195,6 +221,8 @@ export class MenuSystem {
   private remixSelected = false;
   private selectedBurstSlot: keyof BurstSlots = 'neutral';
   private selectedChipSlot: 0 | 1 | 2 = 0;
+  private compendiumFilter: 'all' | DataChipDefinition['category'] = 'all';
+  private challengeFilter: 'all' | ChallengeDefinition['category'] = 'all';
   private capturingAction: ActionKey | null = null;
 
   // Draft setup options for Campaign Select
@@ -308,6 +336,8 @@ export class MenuSystem {
       this.remixSelected ? 1 : 0,
       this.selectedBurstSlot,
       this.selectedChipSlot,
+      this.compendiumFilter,
+      this.challengeFilter,
       this.capturingAction ?? '',
       s.modality,
       s.gamepadName ?? '',
@@ -328,6 +358,10 @@ export class MenuSystem {
       p.unlockedChips.length,
       p.unlockedArmors.length,
       p.clearedStages.length,
+      p.clearedRemixes.length,
+      p.collectedHealthBoosters.length,
+      p.collectedBurstBoosters.length,
+      Object.keys(p.bestTimesTicks).length,
       p.unlockedChallenges.length,
       p.unlockedDataChips.length,
       s.renderSettings.targetFps,
@@ -798,29 +832,74 @@ export class MenuSystem {
                 name: defaultStageLabel(id),
                 subtitle: MAIN_EIGHT_STAGES.includes(id) ? 'Main Circuit Sector' : 'Special Operation',
               }));
+        const playableStages = stages.filter((st) => st.id !== 'hub');
+        const bosses = this.catalog.bosses ?? [];
+        const clearedCount = playableStages.filter((st) => p.clearedStages.includes(st.id)).length;
+        const remixClearedCount = REMIXABLE_STAGES.filter((id) => p.clearedRemixes.includes(id)).length;
 
         return `
           <div class="kc-hub-toolbar">
-            <span>Select deployment sector</span>
+            <div class="kc-row">
+              <span>SECTORS CLEARED: <strong style="color:#4dffb5">${clearedCount} / ${playableStages.length}</strong></span>
+              <span class="kc-pill">REMIXES: ${remixClearedCount} / ${REMIXABLE_STAGES.length}</span>
+              <span class="kc-pill">HP+: ${p.collectedHealthBoosters.length} &nbsp;|&nbsp; BST+: ${p.collectedBurstBoosters.length}</span>
+            </div>
             <button type="button" class="kc-chip-btn kc-focusable ${this.remixSelected ? 'is-selected' : ''}" data-action="toggle-remix">
               MASTER REMIX: ${this.remixSelected ? 'ON' : 'OFF'}
             </button>
           </div>
           <div class="kc-card-grid">
-            ${stages
-              .filter((st) => st.id !== 'hub')
+            ${playableStages
               .map((st) => {
                 const cleared = p.clearedStages.includes(st.id);
+                const remixCleared = p.clearedRemixes.includes(st.id);
                 const canRemix = REMIXABLE_STAGES.includes(st.id);
                 const useRemix = this.remixSelected && canRemix;
+                const hasHpBooster = p.collectedHealthBoosters.includes(st.id);
+                const hasBurstBooster = p.collectedBurstBoosters.includes(st.id);
+                const showBoosters = MAIN_EIGHT_STAGES.includes(st.id) || hasHpBooster || hasBurstBooster;
+                const matchedBoss =
+                  bosses.find((b) => (st.bossId ? b.id === st.bossId : b.stageId === st.id));
+                const bossLabel = st.bossName ?? matchedBoss?.name;
+                const bestTicks = p.bestTimesTicks[st.id];
+
                 return `
                   <button type="button" class="kc-stage-card kc-focusable ${cleared ? 'is-cleared' : ''}" data-launch-stage="${st.id}" data-launch-remix="${useRemix ? '1' : '0'}">
                     <div class="kc-card-top">
                       <strong>${escapeHtml(st.name)}</strong>
-                      <span class="kc-badge">${cleared ? 'CLEARED' : 'ACTIVE'}</span>
+                      <div class="kc-row" style="gap:4px">
+                        ${cleared ? '<span class="kc-badge" style="color:#4dffb5;border-color:#2c8a66">CLEARED</span>' : '<span class="kc-badge">ACTIVE</span>'}
+                        ${remixCleared ? '<span class="kc-badge" style="color:#ffd166;border-color:#b88a1e">REMIX CLEARED</span>' : ''}
+                      </div>
                     </div>
                     <div class="kc-card-sub">${escapeHtml(st.subtitle)}</div>
-                    ${useRemix ? '<div class="kc-badge-remix">REMIX LAYOUT</div>' : ''}
+                    ${
+                      bossLabel
+                        ? `<div style="font-size:10px;color:#fda4af;letter-spacing:0.06em">BOSS: <strong>${escapeHtml(bossLabel.toUpperCase())}</strong></div>`
+                        : ''
+                    }
+                    <div style="display:flex;justify-content:space-between;align-items:center;gap:6px;margin-top:2px;font-size:9px">
+                      <div style="display:flex;align-items:center;gap:8px">
+                        ${
+                          showBoosters
+                            ? `<span title="Health Booster" style="display:inline-flex;align-items:center;gap:3px;color:${hasHpBooster ? '#4dffb5' : '#64748b'}">
+                                 <span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:${hasHpBooster ? '#4dffb5' : 'transparent'};border:1px solid ${hasHpBooster ? '#4dffb5' : '#475569'}"></span>HP
+                               </span>
+                               <span title="Burst Booster" style="display:inline-flex;align-items:center;gap:3px;color:${hasBurstBooster ? '#5ce1ff' : '#64748b'}">
+                                 <span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:${hasBurstBooster ? '#5ce1ff' : 'transparent'};border:1px solid ${hasBurstBooster ? '#5ce1ff' : '#475569'}"></span>BST
+                               </span>`
+                            : `<span style="color:#64748b">${canRemix ? 'REMIX READY' : 'STANDARD ONLY'}</span>`
+                        }
+                      </div>
+                      ${
+                        bestTicks !== undefined
+                          ? `<span style="color:#ffd166">${formatSpeedrunTicks(bestTicks)}</span>`
+                          : useRemix
+                            ? '<span class="kc-badge-remix">REMIX LAYOUT</span>'
+                            : ''
+                      }
+                    </div>
+                    ${useRemix && bestTicks !== undefined ? '<div class="kc-badge-remix">REMIX LAYOUT</div>' : ''}
                   </button>
                 `;
               })
@@ -832,16 +911,22 @@ export class MenuSystem {
       case 'medbay_chips': {
         const chips = this.catalog.chips ?? [];
         const slots: (0 | 1 | 2)[] = [0, 1, 2];
+        const chipNameById = (id: ChipId | 0): string => {
+          if (id === 0) return 'EMPTY';
+          return chips.find((c) => c.id === id)?.name ?? `#${id}`;
+        };
+
         return `
           <div class="kc-hub-toolbar">
-            <span>Target Chip Slot:</span>
+            <span>Target Chip Slot (Unlocked: ${p.unlockedChips.length} / ${chips.length || 20}):</span>
             <div class="kc-row">
               ${slots
                 .map(
                   (si) =>
-                    `<button type="button" class="kc-chip-btn kc-focusable ${this.selectedChipSlot === si ? 'is-selected' : ''}" data-chip-slot="${si}">SLOT ${si + 1} (${ld.chips[si] || 'EMPTY'})</button>`,
+                    `<button type="button" class="kc-chip-btn kc-focusable ${this.selectedChipSlot === si ? 'is-selected' : ''}" data-chip-slot="${si}">SLOT ${si + 1}: ${escapeHtml(chipNameById(ld.chips[si]))}</button>`,
                 )
                 .join('')}
+              <button type="button" class="kc-btn-xs kc-focusable" data-clear-chip-slot="${this.selectedChipSlot}">CLEAR SLOT</button>
             </div>
           </div>
           <div class="kc-card-grid">
@@ -852,12 +937,17 @@ export class MenuSystem {
                     .map((c) => {
                       const unlocked = p.unlockedChips.includes(c.id);
                       const equipped = ld.chips.includes(c.id);
+                      const costText =
+                        c.rescueTokens > 0
+                          ? `${c.priceBits}B + ${c.rescueTokens}T`
+                          : `${c.priceBits}B`;
                       return `
                         <button type="button" class="kc-item-card kc-focusable ${equipped ? 'is-equipped' : ''}" data-chip-id="${c.id}" data-chip-unlocked="${unlocked ? '1' : '0'}">
                           <div class="kc-card-top">
                             <strong>${escapeHtml(c.name)}</strong>
-                            <span class="kc-badge">${equipped ? 'EQUIPPED' : unlocked ? 'OWNED' : `${c.priceBits}B`}</span>
+                            <span class="kc-badge" style="${equipped ? 'color:#4dffb5;border-color:#4dffb5' : unlocked ? '' : 'color:#ffd166;border-color:#8a6d1c'}">${equipped ? 'EQUIPPED' : unlocked ? 'OWNED' : costText}</span>
                           </div>
+                          <div style="font-size:9px;color:#5ce1ff;letter-spacing:0.1em">${c.part.toUpperCase()} MODULE</div>
                           <div class="kc-card-sub">${escapeHtml(c.description)}</div>
                         </button>
                       `;
@@ -871,16 +961,22 @@ export class MenuSystem {
       case 'burst_dojo': {
         const bursts = this.catalog.bursts ?? [];
         const bSlots: (keyof BurstSlots)[] = ['neutral', 'side', 'up', 'down'];
+        const burstNameById = (id: BurstId | 0): string => {
+          if (id === 0) return 'EMPTY';
+          return bursts.find((b) => b.id === id)?.name ?? `#${id}`;
+        };
+
         return `
           <div class="kc-hub-toolbar">
-            <span>Target Directional Slot:</span>
+            <span>Directional Burst Slot (Unlocked: ${p.unlockedBursts.length} / ${bursts.length || 20}):</span>
             <div class="kc-row">
               ${bSlots
                 .map(
                   (sl) =>
-                    `<button type="button" class="kc-chip-btn kc-focusable ${this.selectedBurstSlot === sl ? 'is-selected' : ''}" data-burst-slot="${sl}">${sl.toUpperCase()} (${ld.bursts[sl] || '-'})</button>`,
+                    `<button type="button" class="kc-chip-btn kc-focusable ${this.selectedBurstSlot === sl ? 'is-selected' : ''}" data-burst-slot="${sl}">${sl.toUpperCase()}: ${escapeHtml(burstNameById(ld.bursts[sl]))}</button>`,
                 )
                 .join('')}
+              <button type="button" class="kc-btn-xs kc-focusable" data-clear-burst-slot="${this.selectedBurstSlot}">CLEAR SLOT</button>
             </div>
           </div>
           <div class="kc-card-grid">
@@ -892,12 +988,16 @@ export class MenuSystem {
                       const unlocked = p.unlockedBursts.includes(b.id);
                       const equipped = Object.values(ld.bursts).includes(b.id);
                       return `
-                        <button type="button" class="kc-item-card kc-focusable ${equipped ? 'is-equipped' : ''}" data-burst-id="${b.id}" data-burst-unlocked="${unlocked ? '1' : '0'}">
+                        <button type="button" class="kc-item-card kc-focusable ${equipped ? 'is-equipped' : ''}" style="border-left:3px solid ${escapeHtml(b.color)}" data-burst-id="${b.id}" data-burst-unlocked="${unlocked ? '1' : '0'}">
                           <div class="kc-card-top">
                             <strong>${escapeHtml(b.name)}</strong>
-                            <span class="kc-badge">${equipped ? 'EQUIPPED' : unlocked ? 'OWNED' : `${b.priceBits}B`}</span>
+                            <span class="kc-badge" style="${equipped ? 'color:#4dffb5;border-color:#4dffb5' : unlocked ? '' : 'color:#ffd166;border-color:#8a6d1c'}">${equipped ? 'EQUIPPED' : unlocked ? 'OWNED' : `${b.priceBits}B`}</span>
                           </div>
-                          <div class="kc-card-sub">${escapeHtml(b.description)} (${b.costCharges} CHG)</div>
+                          <div style="display:flex;justify-content:space-between;font-size:9px;color:#94a3b8;letter-spacing:0.08em">
+                            <span style="color:${escapeHtml(b.color)}">${b.costCharges} CHG // DMG ${b.baseDamage}</span>
+                            ${!unlocked && b.unlockStage ? `<span>SECTOR: ${escapeHtml(defaultStageLabel(b.unlockStage).toUpperCase())}</span>` : ''}
+                          </div>
+                          <div class="kc-card-sub">${escapeHtml(b.description)}</div>
                         </button>
                       `;
                     })
@@ -909,9 +1009,15 @@ export class MenuSystem {
 
       case 'paint_bay': {
         const armors = this.catalog.armors ?? [];
+        const activeArmor = armors.find((a) => a.id === ld.armorPaint);
         return `
           <div class="kc-hub-toolbar">
-            <span>Select Armor Paint (functional trait + 6-color GPU palette swap)</span>
+            <span>ARMOR PAINTS UNLOCKED: <strong style="color:#5ce1ff">${p.unlockedArmors.length} / ${armors.length || 12}</strong></span>
+            ${
+              activeArmor
+                ? `<span class="kc-pill">ACTIVE: ${escapeHtml(activeArmor.name.toUpperCase())} — ${escapeHtml(activeArmor.traitName.toUpperCase())}</span>`
+                : '<span>Functional Trait + Live 6-Color GPU Palette Swap</span>'
+            }
           </div>
           <div class="kc-card-grid">
             ${
@@ -926,16 +1032,26 @@ export class MenuSystem {
                       const unlocked = p.unlockedArmors.includes(a.id);
                       const eq = ld.armorPaint === a.id;
                       const swatches = a.palette
-                        .map((hex) => `<span class="kc-swatch" style="background:${escapeHtml(hex)}"></span>`)
+                        .map(
+                          (hex) =>
+                            `<span class="kc-swatch" style="flex:1;height:12px;background:${escapeHtml(hex)}" title="${escapeHtml(hex)}"></span>`,
+                        )
                         .join('');
+                      const visorMini = `<span style="display:inline-flex;align-items:center;justify-content:center;width:16px;height:14px;background:${escapeHtml(a.palette[2])};border:2px solid ${escapeHtml(a.palette[0])};box-shadow:inset 0 2px 0 ${escapeHtml(a.palette[3])}"><span style="width:8px;height:4px;background:${escapeHtml(a.palette[5])};display:block"></span></span>`;
                       return `
-                        <button type="button" class="kc-item-card kc-focusable ${eq ? 'is-equipped' : ''}" ${!unlocked ? 'disabled' : ''} data-equip-armor="${a.id}">
+                        <button type="button" class="kc-item-card kc-focusable ${eq ? 'is-equipped' : unlocked ? '' : 'is-locked'}" ${!unlocked ? 'disabled' : ''} data-equip-armor="${a.id}">
                           <div class="kc-card-top">
-                            <strong>${escapeHtml(a.name)}</strong>
-                            <span class="kc-badge">${eq ? 'EQUIPPED' : unlocked ? escapeHtml(a.traitName) : 'LOCKED'}</span>
+                            <span style="display:inline-flex;align-items:center;gap:6px">${visorMini}<strong>${escapeHtml(a.name)}</strong></span>
+                            <span class="kc-badge" style="${eq ? 'color:#4dffb5;border-color:#4dffb5' : unlocked ? 'color:#5ce1ff' : 'color:#94a3b8'}">${eq ? 'EQUIPPED' : unlocked ? 'OWNED' : 'LOCKED'}</span>
                           </div>
-                          <div class="kc-swatch-row">${swatches}</div>
+                          <div class="kc-swatch-row" style="width:100%;gap:2px;margin:2px 0">${swatches}</div>
+                          <div style="font-size:10px;font-weight:700;color:#ffd166;letter-spacing:0.06em">TRAIT: ${escapeHtml(a.traitName.toUpperCase())}</div>
                           <div class="kc-card-sub">${escapeHtml(a.description)}</div>
+                          ${
+                            !unlocked && a.unlockStage
+                              ? `<div style="font-size:9px;color:#94a3b8;margin-top:2px">FIND CHIP IN: ${escapeHtml(defaultStageLabel(a.unlockStage).toUpperCase())}</div>`
+                              : ''
+                          }
                         </button>
                       `;
                     })
@@ -947,25 +1063,45 @@ export class MenuSystem {
 
       case 'compendium': {
         const entries = this.catalog.dataChips ?? [];
+        const totalChips = entries.length || 100;
+        const unlockedTotal = p.unlockedDataChips.length;
+        const pct = Math.min(100, Math.round((unlockedTotal / Math.max(1, totalChips)) * 100));
+        const filtered =
+          this.compendiumFilter === 'all'
+            ? entries
+            : entries.filter((d) => d.category === this.compendiumFilter);
+
         return `
-          <div class="kc-hub-toolbar">
-            <span>Data Chips Decoded: ${p.unlockedDataChips.length} / ${entries.length || 100}</span>
+          <div class="kc-hub-toolbar" style="flex-direction:column;align-items:stretch;gap:8px">
+            <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+              <span>DATA CHIPS DECODED: <strong style="color:#5ce1ff">${unlockedTotal} / ${totalChips}</strong> (${pct}%)</span>
+              <div style="flex:1;min-width:140px;max-width:260px;height:10px;background:#091121;border:1px solid #2c436b;overflow:hidden">
+                <div style="width:${pct}%;height:100%;background:linear-gradient(90deg,#38bdf8,#4dffb5)"></div>
+              </div>
+            </div>
+            <div class="kc-row">
+              ${COMPENDIUM_FILTERS.map((f) => {
+                const catEntries = f.id === 'all' ? entries : entries.filter((d) => d.category === f.id);
+                const catUnlocked = catEntries.filter((d) => p.unlockedDataChips.includes(d.id)).length;
+                return `<button type="button" class="kc-chip-btn kc-focusable ${this.compendiumFilter === f.id ? 'is-selected' : ''}" data-compendium-filter="${f.id}">${f.label} (${catUnlocked}/${catEntries.length})</button>`;
+              }).join('')}
+            </div>
           </div>
           <div class="kc-card-grid">
             ${
-              entries.length === 0
-                ? '<div class="kc-empty">Collect enemies & bosses to decode all 100 Bestiary Data Chips.</div>'
-                : entries
-                    .slice(0, 40)
+              filtered.length === 0
+                ? '<div class="kc-empty">Defeat enemies, clear sectors, and explore vaults to decode all 100 Bestiary Data Chips.</div>'
+                : filtered
                     .map((d) => {
                       const unlocked = p.unlockedDataChips.includes(d.id);
+                      const catColor = COMPENDIUM_CAT_COLORS[d.category] ?? '#5ce1ff';
                       return `
-                        <div class="kc-item-card ${unlocked ? '' : 'is-locked'}">
+                        <div class="kc-item-card ${unlocked ? '' : 'is-locked'}" style="${unlocked ? `border-left:3px solid ${catColor}` : ''}">
                           <div class="kc-card-top">
-                            <strong>#${String(d.index).padStart(3, '0')} ${unlocked ? escapeHtml(d.title) : '???'}</strong>
-                            <span class="kc-badge">${d.category.toUpperCase()}</span>
+                            <strong>#${String(d.index).padStart(3, '0')} ${unlocked ? escapeHtml(d.title) : 'ENCRYPTED SIGNAL'}</strong>
+                            <span class="kc-badge" style="color:${catColor};border-color:${catColor}">${d.category.toUpperCase()}</span>
                           </div>
-                          <div class="kc-card-sub">${unlocked ? escapeHtml(d.lore) : 'Defeat target in the field to decode.'}</div>
+                          <div class="kc-card-sub" style="${unlocked ? 'color:#d7e7ff' : ''}">${unlocked ? escapeHtml(d.lore) : 'Engage this target or sector in the field to decrypt archive lore.'}</div>
                         </div>
                       `;
                     })
@@ -977,23 +1113,49 @@ export class MenuSystem {
 
       case 'challenges': {
         const list = this.catalog.challenges ?? [];
+        const totalChallenges = list.length || 53;
+        const doneCount = p.unlockedChallenges.length;
+        const pct = Math.min(100, Math.round((doneCount / Math.max(1, totalChallenges)) * 100));
+        const earnedBits = list
+          .filter((ch) => p.unlockedChallenges.includes(ch.id))
+          .reduce((acc, ch) => acc + ch.rewardBits, 0);
+        const totalBits = list.reduce((acc, ch) => acc + ch.rewardBits, 0);
+        const filtered =
+          this.challengeFilter === 'all'
+            ? list
+            : list.filter((ch) => ch.category === this.challengeFilter);
+
         return `
-          <div class="kc-hub-toolbar">
-            <span>Challenges Cleared: ${p.unlockedChallenges.length} / ${list.length || 53}</span>
+          <div class="kc-hub-toolbar" style="flex-direction:column;align-items:stretch;gap:8px">
+            <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+              <span>CHALLENGES COMPLETED: <strong style="color:#4dffb5">${doneCount} / ${totalChallenges}</strong> (${pct}%)</span>
+              <span class="kc-pill" style="color:#ffd166;border-color:#8a6d1c">REWARD BITS: ${earnedBits} / ${totalBits} B</span>
+            </div>
+            <div style="width:100%;height:12px;background:#091121;border:1px solid #2c436b;position:relative;overflow:hidden">
+              <div style="width:${pct}%;height:100%;background:linear-gradient(90deg,#ffd166,#4dffb5)"></div>
+            </div>
+            <div class="kc-row">
+              ${CHALLENGE_FILTERS.map((f) => {
+                const catList = f.id === 'all' ? list : list.filter((ch) => ch.category === f.id);
+                const catDone = catList.filter((ch) => p.unlockedChallenges.includes(ch.id)).length;
+                return `<button type="button" class="kc-chip-btn kc-focusable ${this.challengeFilter === f.id ? 'is-selected' : ''}" data-challenge-filter="${f.id}">${f.label} (${catDone}/${catList.length})</button>`;
+              }).join('')}
+            </div>
           </div>
           <div class="kc-card-grid">
             ${
-              list.length === 0
+              filtered.length === 0
                 ? '<div class="kc-empty">53 combat, speed, and boss mastery challenges tracked automatically.</div>'
-                : list
+                : filtered
                     .map((ch) => {
                       const done = p.unlockedChallenges.includes(ch.id);
                       return `
-                        <div class="kc-item-card ${done ? 'is-cleared' : ''}">
+                        <div class="kc-item-card ${done ? 'is-cleared' : ''}" style="${done ? 'border-left:3px solid #4dffb5' : ''}">
                           <div class="kc-card-top">
                             <strong>${escapeHtml(ch.name)}</strong>
-                            <span class="kc-badge">${done ? 'DONE' : `+${ch.rewardBits}B`}</span>
+                            <span class="kc-badge" style="${done ? 'color:#4dffb5;border-color:#2c8a66' : 'color:#ffd166;border-color:#8a6d1c'}">${done ? `DONE • +${ch.rewardBits}B` : `+${ch.rewardBits} BITS`}</span>
                           </div>
+                          <div style="font-size:9px;color:#5ce1ff;letter-spacing:0.1em">${ch.category.toUpperCase()}</div>
                           <div class="kc-card-sub">${escapeHtml(ch.description)}</div>
                         </div>
                       `;
@@ -1008,10 +1170,24 @@ export class MenuSystem {
         return `
           <div class="kc-training-box">
             <h3>COMBAT &amp; HOOKSHOT TRAINING SIMULATOR</h3>
-            <p>Practice 8-dir grapple zips, guard-breaking Air Up-Kicks, shield throws, and Burst combos in a safe test arena.</p>
+            <p>Practice 8-dir grapple zips, guard-breaking Air Up-Kicks, shield throws, and Burst combos in a safe VR calibration arena.</p>
+            <div class="kc-card-grid">
+              <div class="kc-item-card" style="cursor:default">
+                <div class="kc-card-top"><strong>GUARD-BREAK LOOP</strong><span class="kc-badge">COMBAT</span></div>
+                <div class="kc-card-sub">Use Sprint Kick, Up+Attack, or Heavy Dive-Kick to shatter enemy shields, then Hookshot grab &amp; throw!</div>
+              </div>
+              <div class="kc-item-card" style="cursor:default">
+                <div class="kc-card-top"><strong>8-DIR GRAPPLE</strong><span class="kc-badge">MOBILITY</span></div>
+                <div class="kc-card-sub">Aim with directional keys/stick and fire Hookshot to zip to walls, pendulum-swing across chasms, or snatch Bits.</div>
+              </div>
+              <div class="kc-item-card" style="cursor:default">
+                <div class="kc-card-top"><strong>DIRECTIONAL BURSTS</strong><span class="kc-badge">BURST</span></div>
+                <div class="kc-card-sub">Hold Neutral, Side, Up, or Down + Burst to fire any of your 4 equipped techniques. Swap 3 loadouts on the fly!</div>
+              </div>
+            </div>
             <div class="kc-row">
               <button type="button" class="kc-btn kc-btn-primary kc-focusable" data-launch-stage="tutorial" data-launch-remix="0">ENTER TRAINING COURSE</button>
-              <button type="button" class="kc-btn kc-focusable" data-action="cycle-loadout">CYCLE LOADOUT</button>
+              <button type="button" class="kc-btn kc-focusable" data-action="cycle-loadout">CYCLE LOADOUT [${p.activeLoadoutIndex + 1}/3]</button>
             </div>
           </div>
         `;
@@ -1020,7 +1196,7 @@ export class MenuSystem {
         const bosses = this.catalog.bosses ?? [];
         return `
           <div class="kc-hub-toolbar">
-            <span>Instant Circuit Master Rematch Simulator</span>
+            <span>Instant Circuit Master Rematch Simulator (${bosses.length} Encounters)</span>
             <button type="button" class="kc-chip-btn kc-focusable" data-action="boss-rush">LAUNCH FULL BOSS RUSH</button>
           </div>
           <div class="kc-card-grid">
@@ -1028,17 +1204,22 @@ export class MenuSystem {
               bosses.length === 0
                 ? '<div class="kc-empty">Defeat Circuit Masters to challenge them directly here.</div>'
                 : bosses
-                    .map(
-                      (b) => `
-                        <button type="button" class="kc-stage-card kc-focusable" data-refight-boss="${b.id}" data-refight-stage="${b.stageId}">
+                    .map((b) => {
+                      const defeated = p.clearedStages.includes(b.stageId);
+                      const swatches = b.palette
+                        .map((hex) => `<span class="kc-swatch" style="flex:1;height:6px;background:${escapeHtml(hex)}"></span>`)
+                        .join('');
+                      return `
+                        <button type="button" class="kc-stage-card kc-focusable ${defeated ? 'is-cleared' : ''}" data-refight-boss="${b.id}" data-refight-stage="${b.stageId}">
                           <div class="kc-card-top">
                             <strong>${escapeHtml(b.name)}</strong>
-                            <span class="kc-badge">${b.baseHp} HP</span>
+                            <span class="kc-badge" style="${defeated ? 'color:#4dffb5;border-color:#2c8a66' : ''}">${defeated ? 'DEFEATED' : `${b.baseHp} HP`}</span>
                           </div>
-                          <div class="kc-card-sub">${escapeHtml(b.title)}</div>
+                          <div class="kc-swatch-row" style="width:100%;gap:2px">${swatches}</div>
+                          <div class="kc-card-sub">${escapeHtml(b.title)} • ${b.baseHp} HP • ${b.phases} PHASES</div>
                         </button>
-                      `,
-                    )
+                      `;
+                    })
                     .join('')
             }
           </div>
@@ -1274,6 +1455,11 @@ export class MenuSystem {
       this.sync(snap);
     });
 
+    clickBind('[data-clear-chip-slot]', (el) => {
+      const slot = Number(el.dataset.clearChipSlot) as 0 | 1 | 2;
+      this.callbacks.onEquipChip?.(slot, 0);
+    });
+
     clickBind('[data-chip-id]', (el) => {
       const id = Number(el.dataset.chipId) as ChipId;
       const unlocked = el.dataset.chipUnlocked === '1';
@@ -1290,6 +1476,11 @@ export class MenuSystem {
       this.sync(snap);
     });
 
+    clickBind('[data-clear-burst-slot]', (el) => {
+      const slot = el.dataset.clearBurstSlot as keyof BurstSlots;
+      this.callbacks.onEquipBurst?.(slot, 0);
+    });
+
     clickBind('[data-burst-id]', (el) => {
       const id = Number(el.dataset.burstId) as BurstId;
       const unlocked = el.dataset.burstUnlocked === '1';
@@ -1298,6 +1489,20 @@ export class MenuSystem {
       } else {
         this.callbacks.onEquipBurst?.(this.selectedBurstSlot, id);
       }
+    });
+
+    clickBind('[data-compendium-filter]', (el) => {
+      this.compendiumFilter = el.dataset.compendiumFilter as 'all' | DataChipDefinition['category'];
+      this.focusIndex = 0;
+      this.lastRenderKey = '';
+      this.sync(snap);
+    });
+
+    clickBind('[data-challenge-filter]', (el) => {
+      this.challengeFilter = el.dataset.challengeFilter as 'all' | ChallengeDefinition['category'];
+      this.focusIndex = 0;
+      this.lastRenderKey = '';
+      this.sync(snap);
     });
 
     clickBind('[data-equip-armor]', (el) => {
