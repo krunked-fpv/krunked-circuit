@@ -29,7 +29,7 @@ const DEFAULT_SEED = 0x4b52554e; // 'KRUN'
 export interface SimStepHooks {
   updateEnemies?: (state: SimState) => void;
   updateBoss?: (state: SimState) => void;
-  updateWorld?: (state: SimState) => void;
+  updateWorld?: (state: SimState, input?: InputFrame) => void;
   onEnemyDefeated?: (state: SimState, enemy: EnemyEntity) => void;
   onBossDefeated?: (state: SimState, boss: BossEntity) => void;
   getEnemyArchetype?: (id: string) => EnemyArchetype | undefined;
@@ -352,10 +352,10 @@ export function loadStageIntoState(
           invulnTimer: 0,
           active: false,
           defeated: false,
-          arenaLeft,
-          arenaRight: arenaLeft + CELL_W,
-          arenaTop,
-          arenaBottom: arenaTop + CELL_H,
+          arenaLeft: arenaLeft + TS,
+          arenaRight: arenaLeft + CELL_W - TS,
+          arenaTop: arenaTop + TS,
+          arenaBottom: arenaTop + CELL_H - TS,
           partsHp: [16, 16, 16],
         };
         break;
@@ -708,7 +708,7 @@ export function stepSim(
   // External world, enemy, and boss hooks
   hooks?.updateEnemies?.(state);
   hooks?.updateBoss?.(state);
-  hooks?.updateWorld?.(state);
+  hooks?.updateWorld?.(state, input);
 
   // Clamp coordinates, update flowing 7-node scarf, camera, and action state
   clampSimCoordinates(state);
