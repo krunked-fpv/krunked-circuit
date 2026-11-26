@@ -1,12 +1,16 @@
 import {
   MAIN_EIGHT_STAGES,
   PLAYER_PHYSICS,
+  TileType,
   type ArmorPaintId,
   type BurstId,
   type BurstSlots,
   type ChipId,
+  type DataChipDefinition,
   type Loadout,
   type ProgressionState,
+  type SimState,
+  type StageId,
   type StageStats,
 } from '../contracts/index';
 import {
@@ -16,13 +20,30 @@ import {
   CHIP_DEFINITIONS,
   DATACHIP_DEFINITIONS,
   getBurstDefinition,
+  getChallengeDefinition,
   getChipDefinition,
+  getDataChipDefinition,
 } from '../data/index';
 
 export interface PurchaseResult {
   readonly ok: boolean;
   readonly reason?: string;
 }
+
+const STAGE_TO_BOSS_KEY: Partial<Record<StageId, string>> = {
+  opening: 'siege_tread',
+  optic: 'prism',
+  patch: 'stitch',
+  cooler: 'frostfang',
+  elec: 'arcbolt',
+  shift: 'strider',
+  wave: 'tempo',
+  break: 'crag',
+  cipher: 'phantom',
+  final_1: 'mirror_rival',
+  final_2: 'prism_core',
+  final_3: 'overlord_apex',
+};
 
 export function createInitialProgression(): ProgressionState {
   const defaultLoadouts: [Loadout, Loadout, Loadout] = [
@@ -241,6 +262,241 @@ export function computeStageRank(stats: StageStats): 'S' | 'A' | 'B' | 'C' {
   return rank;
 }
 
+function findDataChipByKey(key: string): DataChipDefinition | undefined {
+  if (!key) {
+    return undefined;
+  }
+  const direct = getDataChipDefinition(key);
+  if (direct) {
+    return direct;
+  }
+  for (let i = 0; i < DATACHIP_DEFINITIONS.length; i++) {
+    const def = DATACHIP_DEFINITIONS[i];
+    if (def.relatedKey === key) {
+      return def;
+    }
+  }
+  const candidates = [
+    `dc_${key}`,
+    `dc_enemy_${key}`,
+    `dc_boss_${key}`,
+    `dc_world_${key}`,
+    `dc_tech_${key}`,
+    `dc_hero_${key}`,
+  ];
+  for (let i = 0; i < candidates.length; i++) {
+    const hit = getDataChipDefinition(candidates[i]);
+    if (hit) {
+      return hit;
+    }
+  }
+  return undefined;
+}
+
+function tryUnlockChallenge(state: SimState, id: string): void {
+  const def = getChallengeDefinition(id);
+  if (!def) {
+    return;
+  }
+  if (state.progression.unlockedChallenges.includes(def.id)) {
+    return;
+  }
+  state.progression.unlockedChallenges.push(def.id);
+  state.progression.bits += def.rewardBits;
+  state.events.push({
+    type: 'challengeUnlock',
+    id: def.id,
+    name: def.name,
+  });
+}
+
+/**
+ * Pure deterministic Data Chip unlock by DataChip ID or relatedKey (enemy/boss/stage/tech).
+ * Emits a `datachipUnlock` SimEvent when newly unlocked.
+ */
+export function unlockDataChip(state: SimState, key: string): void {
+  const def = findDataChipByKey(key);
+  if (!def) {
+    return;
+  }
+  if (state.progression.unlockedDataChips.includes(def.id)) {
+    return;
+  }
+  state.progression.unlockedDataChips.push(def.id);
+  state.events.push({
+    type: 'datachipUnlock',
+    id: def.id,
+    title: def.title,
+  });
+}
+
+function isPlayerSlidingUnderCeiling(state: SimState): boolean {
+  const p = state.player;
+  if (!p.sliding || p.h !== PLAYER_PHYSICS.SLIDE_H || Math.abs(p.vx) < 3.0) {
+    return false;
+  }
+  const ts = 16;
+  const aboveTy = Math.floor((p.y - 3) / ts);
+  if (aboveTy < 0 || aboveTy >= state.tilesH) {
+    return false;
+  }
+  const leftTx = Math.floor((p.x + 1) / ts);
+  const rightTx = Math.floor((p.x + p.w - 1) / ts);
+  for (let tx = leftTx; tx <= rightTx; tx++) {
+    if (tx < 0 || tx >= state.tilesW) continue;
+    const tile = state.tiles[aboveTy * state.tilesW + tx];
+    if (
+      tile === TileType.SOLID ||
+      tile === TileType.BREAKABLE ||
+      tile === TileType.ICE ||
+      tile === TileType.CONVEYOR_L ||
+      tile === TileType.CONVEYOR_R ||
+      tile === TileType.CRUSHER
+    ) {
+      return true;
+    }
+  }
+  return false;
+}
+
+/**
+ * Pure deterministic evaluator that checks all matching Challenge conditions against SimState,
+ * unlocking newly satisfied challenges, awarding their reward Bits, and emitting `challengeUnlock`.
+ */
+export function evaluateChallenges(state: SimState): void {
+  const prog = state.progression;
+  const p = state.player;
+  const stats = state.stageStats;
+  const boss = state.boss;
+
+  // Stage clears
+  if (prog.clearedStages.includes('opening')) {
+    tryUnlockChallenge(state, 'chal_first_clear');
+  }
+  if (prog.clearedStages.includes('optic')) {
+    tryUnlockChallenge(state, 'chal_solar_clear');
+  }
+  for (let i = 0; i < prog.clearedStages.length; i++) {
+    const sid = prog.clearedStages[i];
+    tryUnlockChallenge(state, `chal_${sid}_clear`);
+    tryUnlockChallenge(state, `chal_clear_${sid}`);
+  }
+
+  // S-Rank & Remix & Modes
+  if (
+    (state.screen === 'stage_clear' || p.action === 'victory') &&
+    stats.rank === 'S'
+  ) {
+    tryUnlockChallenge(state, 'chal_s_rank_any');
+  }
+  if (prog.clearedRemixes.length > 0) {
+    tryUnlockChallenge(state, 'chal_remix_clear');
+  }
+  if (prog.clearedStages.includes('boss_rush')) {
+    tryUnlockChallenge(state, 'chal_boss_rush_clear');
+  }
+  if (prog.mode === 'circuit' && prog.clearedStages.length > 0) {
+    tryUnlockChallenge(state, 'chal_circuit_mode');
+  }
+  if (MAIN_EIGHT_STAGES.every((sid) => prog.clearedStages.includes(sid))) {
+    tryUnlockChallenge(state, 'chal_eight_masters');
+    tryUnlockChallenge(state, 'chal_all_main_stages');
+  }
+  if (prog.clearedStages.includes('final_3')) {
+    tryUnlockChallenge(state, 'chal_campaign_clear');
+    tryUnlockChallenge(state, 'chal_final_clear');
+  }
+
+  // Combat & movement mastery
+  if (p.comboCount >= 10) {
+    tryUnlockChallenge(state, 'chal_combo_master');
+  }
+  if (p.comboCount >= 20) {
+    tryUnlockChallenge(state, 'chal_combo_legend');
+  }
+  if (isPlayerSlidingUnderCeiling(state)) {
+    tryUnlockChallenge(state, 'chal_slide_specialist');
+  }
+  if (p.hook.phase === 'swinging' && p.hook.timer >= 5) {
+    tryUnlockChallenge(state, 'chal_hook_swing');
+  }
+
+  // Guard break & thrown bowling checks
+  for (let i = 0; i < state.projectiles.length; i++) {
+    const pr = state.projectiles[i];
+    if (pr.kind === 'thrown_shield') {
+      tryUnlockChallenge(state, 'chal_guard_breaker');
+    }
+    if (pr.owner === 'thrown' && pr.hitIds.length >= 2) {
+      tryUnlockChallenge(state, 'chal_throw_chain');
+    }
+  }
+
+  // Boss mastery checks
+  if (boss && boss.defeated) {
+    tryUnlockChallenge(state, `chal_boss_${boss.bossId}`);
+    if (stats.damageTaken === 0) {
+      tryUnlockChallenge(state, 'chal_no_damage_boss');
+    }
+    if (p.action === 'burst' || (p.attackId === null && p.attackTimer > 0)) {
+      tryUnlockChallenge(state, 'chal_burst_finisher');
+    }
+    if (
+      boss.bossId === 'prism' &&
+      boss.desperationTriggered &&
+      stats.damageTaken === 0
+    ) {
+      tryUnlockChallenge(state, 'chal_prism_desperation');
+    }
+  }
+
+  // Collectibles & Arsenal mastery
+  const opticRescues = prog.rescuedIds.filter((id) => id.startsWith('optic:')).length;
+  if (
+    opticRescues >= 8 ||
+    (state.stageId === 'optic' && stats.rescuesCollected >= 8)
+  ) {
+    tryUnlockChallenge(state, 'chal_optic_all_rescues');
+  }
+  if (stats.rescuesCollected >= 8) {
+    tryUnlockChallenge(state, `chal_${state.stageId}_all_rescues`);
+  }
+  if (prog.totalRescues >= 64) {
+    tryUnlockChallenge(state, 'chal_all_rescues');
+  }
+  if (prog.unlockedArmors.length >= 2) {
+    tryUnlockChallenge(state, 'chal_palette_hunter');
+  }
+  if (prog.unlockedArmors.length >= ARMOR_PAINT_DEFINITIONS.length) {
+    tryUnlockChallenge(state, 'chal_all_armors');
+  }
+  if (
+    prog.collectedHealthBoosters.some((sid) =>
+      prog.collectedBurstBoosters.includes(sid),
+    )
+  ) {
+    tryUnlockChallenge(state, 'chal_booster_pair');
+  }
+  if (prog.unlockedBursts.length >= BURST_DEFINITIONS.length) {
+    tryUnlockChallenge(state, 'chal_all_bursts');
+  }
+  if (prog.unlockedChips.length >= CHIP_DEFINITIONS.length) {
+    tryUnlockChallenge(state, 'chal_all_chips');
+  }
+  if (prog.unlockedDataChips.length >= DATACHIP_DEFINITIONS.length) {
+    tryUnlockChallenge(state, 'chal_all_datachips');
+  }
+
+  // Modifier clears when stage is cleared
+  if (state.screen === 'stage_clear' || p.action === 'victory') {
+    if (prog.modifiers.rudeEnemies) tryUnlockChallenge(state, 'chal_mod_rude');
+    if (prog.modifiers.doubleHazards) tryUnlockChallenge(state, 'chal_mod_hazards');
+    if (prog.modifiers.singleCredit) tryUnlockChallenge(state, 'chal_mod_single_credit');
+    if (prog.modifiers.ironCircuit) tryUnlockChallenge(state, 'chal_mod_iron_circuit');
+    if (prog.modifiers.mirrorWorld) tryUnlockChallenge(state, 'chal_mod_mirror');
+  }
+}
+
 export function completeStage(
   progression: ProgressionState,
   stats: StageStats,
@@ -267,35 +523,45 @@ export function completeStage(
   };
   progression.bits += rankBonusBits[rank];
 
-  const unlockChallenge = (id: string): void => {
-    if (!progression.unlockedChallenges.includes(id)) {
-      progression.unlockedChallenges.push(id);
+  const unlockChallengeId = (id: string): void => {
+    const def = getChallengeDefinition(id);
+    if (def && !progression.unlockedChallenges.includes(def.id)) {
+      progression.unlockedChallenges.push(def.id);
+      progression.bits += def.rewardBits;
     }
   };
-  const unlockDataChip = (id: string): void => {
-    if (!progression.unlockedDataChips.includes(id)) {
-      progression.unlockedDataChips.push(id);
+  const unlockDataChipKey = (key: string): void => {
+    const def = findDataChipByKey(key);
+    if (def && !progression.unlockedDataChips.includes(def.id)) {
+      progression.unlockedDataChips.push(def.id);
     }
   };
 
+  // Unlock world & boss datachips for any cleared stage
+  unlockDataChipKey(stats.stageId);
+  const bossKey = STAGE_TO_BOSS_KEY[stats.stageId];
+  if (bossKey) {
+    unlockDataChipKey(bossKey);
+  }
+
   if (stats.stageId === 'opening') {
-    unlockChallenge('chal_first_clear');
-    unlockDataChip('dc_world_opening');
-    unlockDataChip('dc_boss_siege_tread');
+    unlockChallengeId('chal_first_clear');
   }
   if (stats.stageId === 'optic') {
-    unlockChallenge('chal_solar_clear');
-    unlockDataChip('dc_world_optic');
-    unlockDataChip('dc_boss_prism');
+    unlockChallengeId('chal_solar_clear');
     if (stats.rescuesCollected >= 8) {
-      unlockChallenge('chal_optic_all_rescues');
+      unlockChallengeId('chal_optic_all_rescues');
     }
   }
+  unlockChallengeId(`chal_${stats.stageId}_clear`);
+  if (stats.rescuesCollected >= 8) {
+    unlockChallengeId(`chal_${stats.stageId}_all_rescues`);
+  }
   if (rank === 'S') {
-    unlockChallenge('chal_s_rank_any');
+    unlockChallengeId('chal_s_rank_any');
   }
   if (stats.remix) {
-    unlockChallenge('chal_remix_clear');
+    unlockChallengeId('chal_remix_clear');
   }
 
   return stats;

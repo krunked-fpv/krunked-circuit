@@ -16,6 +16,7 @@ import {
   type InputFrame,
   type Loadout,
   type PickupEntity,
+  type PlayerState,
   type ProjectileEntity,
   type SimState,
 } from '../contracts/index';
@@ -29,12 +30,17 @@ import {
   type Aabb,
 } from './collision';
 import { rngRange } from './prng';
+import { evaluateChallenges, unlockDataChip } from './progression';
 
 // ============================================================================
-// Pure Melee Combat, Guard-Break, Damage Mitigation & Projectile Simulation
+// Pure Melee Combat, Guard-Break, Damage Mitigation, Chips, Armors & Projectiles
 // ============================================================================
 
 const TS = ENGINE_CONSTANTS.TILE_SIZE;
+
+// Per-PlayerState pure auxiliary tracking (GC-safe, isolated per SimState, 100% deterministic)
+const catchInterruptWindowMap = new WeakMap<PlayerState, number>();
+const diveBounceStreakMap = new WeakMap<PlayerState, number>();
 
 export interface CombatHooks {
   onEnemyDefeated?: (state: SimState, enemy: EnemyEntity) => void;
@@ -53,6 +59,7 @@ export interface EnemyDamageOptions {
   knockbackY?: number;
   sourceX?: number;
   freezeTicks?: number;
+  isBurst?: boolean;
   onEnemyDefeated?: (state: SimState, enemy: EnemyEntity) => void;
 }
 
@@ -76,6 +83,45 @@ export function hasChip(state: SimState, chipId: ChipId): boolean {
   return chips[0] === chipId || chips[1] === chipId || chips[2] === chipId;
 }
 
+export function getBurstDamageMultiplier(state: SimState): number {
+  let mult = 1.0;
+  const armor = getActiveArmorPaint(state);
+  if (armor === 10) {
+    mult *= 1.25; // Shadow Surge (+25% Burst damage)
+  } else if (armor === 11) {
+    mult *= 1.2; // Apex Prismatic (+20% Burst damage)
+  }
+  if (state.player.overloadTimer > 0) {
+    mult *= PLAYER_PHYSICS.OVERLOAD_DAMAGE_MULT; // Function Overload (1.40x)
+  }
+  return mult;
+}
+
+export function getCatchInterruptTicks(player: PlayerState): number {
+  return catchInterruptWindowMap.get(player) ?? 0;
+}
+
+export function setCatchInterruptTicks(player: PlayerState, ticks: number): void {
+  if (ticks <= 0) {
+    catchInterruptWindowMap.delete(player);
+  } else {
+    catchInterruptWindowMap.set(player, ticks);
+  }
+}
+
+export function tickCatchInterrupt(player: PlayerState): void {
+  const cur = catchInterruptWindowMap.get(player) ?? 0;
+  if (cur > 1) {
+    catchInterruptWindowMap.set(player, cur - 1);
+  } else if (cur === 1) {
+    catchInterruptWindowMap.delete(player);
+  }
+}
+
+export function resetDiveBounceStreak(player: PlayerState): void {
+  diveBounceStreakMap.delete(player);
+}
+
 export function addBurstEnergy(state: SimState, amount: number): void {
   if (amount <= 0) {
     return;
@@ -84,17 +130,17 @@ export function addBurstEnergy(state: SimState, amount: number): void {
   const armor = getActiveArmorPaint(state);
   let mult = 1.0;
   if (hasChip(state, 10)) {
-    mult *= 1.5; // Energy Multiplier
+    mult *= 1.35; // Energy Multiplier (+35% burst gain)
   }
   if (armor === 1) {
     mult *= 1.1; // Solar Beam
   } else if (armor === 6) {
-    mult *= 1.2; // Wave Tempo
+    mult *= 1.2; // Rhythm Cobalt
   } else if (armor === 11) {
-    mult *= 1.15; // Apex Master
+    mult *= 1.15; // Apex Prismatic
   }
   const cap = p.maxBurstCharges * PLAYER_PHYSICS.BURST_ENERGY_PER_CHARGE;
-  p.burstEnergy = Math.min(cap, p.burstEnergy + amount * mult);
+  p.burstEnergy = Math.min(cap, Math.round((p.burstEnergy + amount * mult) * 100) / 100);
 }
 
 export function spawnBits(
@@ -158,8 +204,66 @@ export function computePlayerInvulnTicks(state: SimState): number {
   );
 }
 
+function triggerCatchInterruptCounter(state: SimState): void {
+  const p = state.player;
+  const cx = p.x + p.w * 0.5;
+  const cy = p.y + p.h * 0.5;
+  const counterDmg = Math.round(6 * getBurstDamageMultiplier(state) * 100) / 100;
+  const dome: Aabb = { x: cx - 44, y: cy - 44, w: 88, h: 88 };
+
+  setCatchInterruptTicks(p, 0);
+  p.invulnTimer = Math.max(p.invulnTimer, 28);
+
+  for (let i = 0; i < state.enemies.length; i++) {
+    const e = state.enemies[i];
+    if (e.dead || e.grabbed) continue;
+    if (aabbOverlap(dome, e)) {
+      e.stunTimer = Math.max(e.stunTimer, 90);
+      damageEnemy(state, e, counterDmg, {
+        armorBreak: true,
+        knockbackX: 5.0,
+        knockbackY: -3.5,
+        sourceX: cx,
+        freezeTicks: 4,
+      });
+    }
+  }
+
+  const boss = state.boss;
+  if (boss && boss.active && !boss.defeated && aabbOverlap(dome, boss)) {
+    damageBoss(state, boss, counterDmg, {
+      armorBreak: true,
+      freezeTicks: 4,
+      isBurst: true,
+    });
+  }
+
+  for (let i = 0; i < state.projectiles.length; i++) {
+    const pr = state.projectiles[i];
+    if ((pr.owner === 'enemy' || pr.owner === 'boss') && aabbOverlap(dome, pr)) {
+      pr.owner = 'player';
+      pr.vx = -pr.vx * 1.5;
+      pr.vy = -pr.vy * 1.5;
+      pr.damage = counterDmg;
+      pr.color = '#4de8a4';
+      pr.ttl = Math.max(pr.ttl, 60);
+    }
+  }
+
+  state.hitstopTicks = Math.max(state.hitstopTicks, 4);
+  state.camera.shakeTimer = Math.max(state.camera.shakeTimer, 10);
+  state.camera.shakeIntensity = Math.max(state.camera.shakeIntensity, 3);
+  state.events.push(
+    { type: 'sfx', key: 'armor_break' },
+    { type: 'shake', ticks: 10, intensity: 3 },
+    { type: 'rumble', weak: 0.45, strong: 0.75, durationMs: 140 },
+    { type: 'particle', kind: 'shockring', x: cx, y: cy, color: '#4de8a4', count: 16 },
+    { type: 'toast', text: 'COUNTER INTERRUPT!', tone: 'unlock' },
+  );
+}
+
 /**
- * Applies damage to the player with full chip, armor, barrier, invulnerability,
+ * Applies damage to the player with full chip, armor, barrier, parry, invulnerability,
  * and difficulty table rules. Returns true if damage was applied (not blocked/dodged).
  */
 export function applyDamageToPlayer(
@@ -172,19 +276,40 @@ export function applyDamageToPlayer(
   if (p.action === 'dead' || p.action === 'victory' || rawDamage <= 0) {
     return false;
   }
+
+  // Catch Interrupt (Burst 6): reactive counter-parry window intercepts non-hazard attacks!
+  if (!opts?.isHazard && getCatchInterruptTicks(p) > 0) {
+    triggerCatchInterruptCounter(state);
+    return false;
+  }
+
   if (p.invulnTimer > 0 && !opts?.ignoreInvuln) {
     return false;
   }
 
-  // Dodge Slider chip (ID 13): invulnerable during core slide frames against non-hazards
-  if (!opts?.isHazard && hasChip(state, 13) && p.sliding && p.slideTimer > 4) {
-    state.events.push({ type: 'sfx', key: 'slide', pitchJitter: 0.08 });
+  // Dodge Slider chip (ID 13): invulnerable during slide dash frames against non-hazards
+  if (!opts?.isHazard && hasChip(state, 13) && p.sliding && p.slideTimer > 2) {
+    state.events.push(
+      { type: 'sfx', key: 'slide', pitchJitter: 0.08 },
+      {
+        type: 'particle',
+        kind: 'spark',
+        x: p.x + p.w * 0.5,
+        y: p.y + p.h * 0.5,
+        color: '#38bdf8',
+        count: 5,
+      },
+    );
     return false;
   }
 
-  // Hardware Barrier (Burst 11)
+  // Hardware Barrier (Burst 11): absorbs up to 3 non-hazard hits
   if (!opts?.isHazard && p.barrierHits > 0) {
     p.barrierHits -= 1;
+    if (p.barrierHits <= 0) {
+      p.barrierHits = 0;
+      p.barrierTimer = 0;
+    }
     p.invulnTimer = 24;
     state.events.push({ type: 'sfx', key: 'armor_break' });
     state.events.push({
@@ -235,7 +360,7 @@ export function applyDamageToPlayer(
   if (!opts?.isHazard && hasChip(state, 6) && p.hook.phase === 'holding') {
     dmg = Math.max(1, dmg - 1);
   }
-  // Aegis Armor (ID 10) reduces non-hazard damage by 1
+  // Shadow Surge Armor (ID 10) reduces non-hazard damage by 1 (min 1)
   if (!opts?.isHazard && armor === 10) {
     dmg = Math.max(1, dmg - 1);
   }
@@ -251,7 +376,17 @@ export function applyDamageToPlayer(
   // Underflow Guard chip (ID 9): survive fatal non-hazard hit at 1 HP when hp >= 2
   if (!opts?.isHazard && hasChip(state, 9) && p.hp >= 2 && p.hp - dmg <= 0) {
     dmg = p.hp - 1;
-    state.events.push({ type: 'toast', text: 'UNDERFLOW GUARD!', tone: 'info' });
+    state.events.push(
+      { type: 'toast', text: 'UNDERFLOW GUARD!', tone: 'info' },
+      {
+        type: 'particle',
+        kind: 'shockring',
+        x: p.x + p.w * 0.5,
+        y: p.y + p.h * 0.5,
+        color: '#facc15',
+        count: 10,
+      },
+    );
   }
 
   p.hp = Math.max(0, p.hp - dmg);
@@ -313,6 +448,7 @@ export function applyDamageToPlayer(
   p.attackId = null;
   p.attackTimer = 0;
   p.onLedge = 0;
+  resetDiveBounceStreak(p);
   state.camera.shakeTimer = Math.max(state.camera.shakeTimer, 8);
   state.camera.shakeIntensity = Math.max(state.camera.shakeIntensity, 2.5);
   state.events.push({ type: 'sfx', key: 'hurt' });
@@ -388,16 +524,48 @@ function registerPlayerComboHit(state: SimState, energyGain: number): void {
   const p = state.player;
   p.comboCount += 1;
   const armor = getActiveArmorPaint(state);
+  // Frame Amplifier (Chip 12) extends combo window by +60 ticks
   const comboWindow =
-    120 + (hasChip(state, 12) ? 45 : 0) + (armor === 6 ? 45 : 0);
+    120 + (hasChip(state, 12) ? 60 : 0) + (armor === 6 ? 45 : 0);
   p.comboTimer = comboWindow;
-  const absorberBonus = hasChip(state, 1) ? 4 : 0;
-  addBurstEnergy(state, energyGain + absorberBonus);
+  if (energyGain > 0) {
+    const absorberBonus = hasChip(state, 1) ? 4 : 0;
+    addBurstEnergy(state, energyGain + absorberBonus);
+  }
+
+  // Armor Paint 2 (Mend Alloy): every 5-hit combo restores +1 HP (unless Iron Circuit)
+  if (
+    armor === 2 &&
+    p.comboCount > 0 &&
+    p.comboCount % 5 === 0 &&
+    !state.progression.modifiers.ironCircuit
+  ) {
+    if (p.hp < p.maxHp) {
+      p.hp = Math.min(p.maxHp, p.hp + 1);
+    } else if (hasChip(state, 20)) {
+      addBurstEnergy(state, 15);
+    }
+    state.events.push(
+      { type: 'sfx', key: 'pickup_hp', gain: 0.7 },
+      {
+        type: 'particle',
+        kind: 'heal',
+        x: p.x + p.w * 0.5,
+        y: p.y + p.h * 0.5,
+        color: '#4ade80',
+        count: 6,
+      },
+    );
+  }
+
+  if (p.comboCount >= 10) {
+    evaluateChallenges(state);
+  }
 }
 
 /**
  * Deals damage to an enemy, executing the full guard-break shield-shatter loop,
- * hitstop freeze frames, knockback, bit drops, and stun states.
+ * Frame Amplifier hitstun extension, hitstop freeze frames, knockback, bit drops, and stun states.
  */
 export function damageEnemy(
   state: SimState,
@@ -411,6 +579,7 @@ export function damageEnemy(
 
   const cx = enemy.x + enemy.w * 0.5;
   const cy = enemy.y + enemy.h * 0.5;
+  const hasFrameAmp = hasChip(state, 12);
 
   // Shield guard-break / directional block check
   if (enemy.shielded) {
@@ -420,7 +589,7 @@ export function damageEnemy(
 
     if (opts?.armorBreak) {
       enemy.shielded = false;
-      enemy.stunTimer = Math.max(enemy.stunTimer, 120);
+      enemy.stunTimer = Math.max(enemy.stunTimer, hasFrameAmp ? 165 : 120);
       // Spawn a grabbable broken shield projectile
       spawnProjectile(state, {
         owner: 'thrown',
@@ -449,6 +618,7 @@ export function damageEnemy(
         color: '#38bdf8',
         count: 10,
       });
+      evaluateChallenges(state);
     } else if (hitFromFront) {
       // Blocked by intact shield
       enemy.hurtFlash = 4;
@@ -465,8 +635,8 @@ export function damageEnemy(
     }
   }
 
-  enemy.hp -= damage;
-  enemy.hurtFlash = 8;
+  enemy.hp = Math.round((enemy.hp - damage) * 100) / 100;
+  enemy.hurtFlash = hasFrameAmp ? 12 : 8;
 
   if (opts?.knockbackX !== undefined || opts?.knockbackY !== undefined) {
     const dir =
@@ -490,13 +660,21 @@ export function damageEnemy(
     state.hitstopTicks = Math.max(state.hitstopTicks, opts.freezeTicks);
   }
 
-  registerPlayerComboHit(state, 10);
+  registerPlayerComboHit(state, opts?.isBurst ? 0 : 10);
 
   if (enemy.hp <= 0) {
     enemy.hp = 0;
     enemy.dead = true;
     enemy.grabbed = false;
     state.stageStats.enemiesDefeated += 1;
+
+    // Energy Absorber chip (ID 1): bonus Burst Energy on every enemy takedown
+    if (hasChip(state, 1)) {
+      addBurstEnergy(state, 15);
+    }
+
+    // Unlock matching enemy DataChip on defeat
+    unlockDataChip(state, enemy.archetypeId);
 
     // Anti-farm cap per enemy spawn ID
     const farmKey = `${state.stageId}:${enemy.spawnId}`;
@@ -520,7 +698,10 @@ export function damageEnemy(
   } else {
     // Low HP non-miniboss enemies enter grabbable stunned state
     if (!enemy.isMiniboss && !enemy.shielded && enemy.hp <= 1) {
-      enemy.stunTimer = Math.max(enemy.stunTimer, 90);
+      enemy.stunTimer = Math.max(enemy.stunTimer, hasFrameAmp ? 135 : 90);
+    } else if (hasFrameAmp && !enemy.isMiniboss) {
+      // Frame Amplifier chip (ID 12): extended enemy hitstun on strikes
+      enemy.stunTimer = Math.max(enemy.stunTimer + 20, 36);
     }
     state.events.push({ type: 'sfx', key: damage >= 2 ? 'heavy_hit' : 'hit' });
     state.events.push({
@@ -537,7 +718,8 @@ export function damageEnemy(
 }
 
 /**
- * Deals damage to the active boss with Rude single-hit scaling, tech-recover tracking,
+ * Deals damage to the active boss with Rude Mode anti-infinite scaling
+ * (0.55x factor on repeated 1-dmg / launch hits + 90t techRecoverTimer reset),
  * desperation activation at threshold HP, and defeat event emission.
  */
 export function damageBoss(
@@ -554,19 +736,39 @@ export function damageBoss(
   }
 
   let applied = damage;
-  if (state.progression.modifiers.rudeEnemies && applied > 3) {
-    applied = Math.max(1, Math.round(applied * BOSS_CONSTANTS.RUDE_SINGLE_HIT_FACTOR * 10) / 10);
+  const isLightOrLaunch = Boolean(opts?.armorBreak) || (!opts?.isBurst && damage <= 1.5);
+
+  // Rude Mode anti-infinite scaling: 0.55x factor on repeated 1-dmg / launch hits
+  if (
+    state.progression.modifiers.rudeEnemies &&
+    isLightOrLaunch &&
+    (boss.launchHits >= 1 || boss.techRecoverTimer > 0)
+  ) {
+    applied = Math.round(applied * BOSS_CONSTANTS.RUDE_SINGLE_HIT_FACTOR * 100) / 100;
   }
 
-  boss.hp = Math.max(0, boss.hp - applied);
-  boss.hurtFlash = 8;
+  boss.hp = Math.max(0, Math.round((boss.hp - applied) * 100) / 100);
+  boss.hurtFlash = hasChip(state, 12) ? 10 : 8;
   boss.invulnTimer = opts?.isBurst ? 6 : 10;
 
-  if (opts?.armorBreak) {
+  // Anti-infinite launch/juggle tracker with 90-tick techRecoverTimer reset
+  if (isLightOrLaunch && boss.techRecoverTimer <= 0) {
     boss.launchHits += 1;
     if (boss.launchHits >= 3) {
       boss.techRecoverTimer = BOSS_CONSTANTS.TECH_RECOVER_TICKS;
       boss.launchHits = 0;
+      boss.invulnTimer = Math.max(boss.invulnTimer, 24);
+      state.events.push(
+        { type: 'sfx', key: 'switch', pitchJitter: 0.05 },
+        {
+          type: 'particle',
+          kind: 'shockring',
+          x: boss.x + boss.w * 0.5,
+          y: boss.y + boss.h * 0.5,
+          color: '#f43f5e',
+          count: 8,
+        },
+      );
     }
   }
 
@@ -574,7 +776,7 @@ export function damageBoss(
     state.hitstopTicks = Math.max(state.hitstopTicks, opts.freezeTicks);
   }
 
-  registerPlayerComboHit(state, 12);
+  registerPlayerComboHit(state, opts?.isBurst ? 0 : 12);
 
   const cx = boss.x + boss.w * 0.5;
   const cy = boss.y + boss.h * 0.5;
@@ -609,6 +811,8 @@ export function damageBoss(
     state.camera.shakeTimer = 24;
     state.camera.shakeIntensity = 4.5;
     spawnBits(state, cx, cy, 100);
+    unlockDataChip(state, boss.bossId);
+    evaluateChallenges(state);
     state.events.push({ type: 'sfx', key: 'explosion' });
     state.events.push({ type: 'shake', ticks: 24, intensity: 4.5 });
     state.events.push({ type: 'rumble', weak: 0.7, strong: 1.0, durationMs: 360 });
@@ -701,23 +905,50 @@ function computeMeleeDamage(state: SimState, spec: AttackSpec): number {
   const armor = getActiveArmorPaint(state);
 
   if (armor === 9) {
-    dmg += 1; // Weak / Glass Cannon Armor
+    dmg *= 1.35; // Obsidian Glass: 1.35x Glass Cannon melee damage
+  } else if (armor === 4 || armor === 11) {
+    dmg += 0.5; // Volt Surge & Apex Prismatic: +0.5 electric melee bonus
   } else if (armor === 7 && (spec.id === 'diveKick' || spec.id === 'diveKickHeavy')) {
-    dmg += 1; // Heavy Armor dive bonus
-  } else if (
-    armor === 11 &&
-    (spec.id === 'sprintKick' || spec.id === 'diveKickHeavy' || spec.id === 'hopKick')
-  ) {
-    dmg += 1; // Apex Armor finisher bonus
+    dmg += 1; // Quake Amber heavy dive bonus
   }
 
-  if (hasChip(state, 12)) {
-    dmg *= 1.25; // Frame Amplifier
-  }
   if (state.player.overloadTimer > 0) {
-    dmg *= PLAYER_PHYSICS.OVERLOAD_DAMAGE_MULT; // Function Overload 1.4x
+    dmg *= PLAYER_PHYSICS.OVERLOAD_DAMAGE_MULT; // Function Overload 1.40x
   }
   return Math.round(dmg * 100) / 100;
+}
+
+function emitVoltMeleeSpark(
+  state: SimState,
+  targetId: number,
+  targetCx: number,
+  targetCy: number,
+): void {
+  const p = state.player;
+  const spark = spawnProjectile(state, {
+    owner: 'player',
+    kind: 'electric_arc',
+    x: targetCx - 4,
+    y: targetCy - 4,
+    vx: p.facing * 4.4,
+    vy: -1.4,
+    w: 8,
+    h: 8,
+    damage: 0.5,
+    ttl: 24,
+    pierce: false,
+    bouncesLeft: 0,
+    color: '#38f8ff',
+  });
+  spark.hitIds.push(targetId);
+  state.events.push({
+    type: 'particle',
+    kind: 'spark',
+    x: targetCx,
+    y: targetCy,
+    color: '#38f8ff',
+    count: 6,
+  });
 }
 
 function shatterBreakablesInBox(state: SimState, box: Aabb): void {
@@ -754,6 +985,8 @@ export function stepCombat(
     return;
   }
 
+  const armor = getActiveArmorPaint(state);
+
   // Start a new melee attack when pressing Attack (and not holding a hookshot object)
   if (
     input.attackPressed &&
@@ -774,6 +1007,37 @@ export function stepCombat(
     } else if (id === 'diveKick' || id === 'diveKickHeavy') {
       p.vy = Math.max(p.vy, 5.2);
       p.vx = p.facing * 2.2;
+
+      // Armor Paint 1 (Solar Beam) & 11 (Apex Prismatic): Dive Kick fires downward/angled dive_beam (1.5 dmg)
+      if (armor === 1 || armor === 11) {
+        const beamDmg =
+          p.overloadTimer > 0
+            ? Math.round(1.5 * PLAYER_PHYSICS.OVERLOAD_DAMAGE_MULT * 100) / 100
+            : 1.5;
+        spawnProjectile(state, {
+          owner: 'player',
+          kind: 'dive_beam',
+          x: p.x + p.w * 0.5 - 6 + p.facing * 4,
+          y: p.y + p.h - 4,
+          vx: p.facing * 3.8,
+          vy: 6.2,
+          w: 12,
+          h: 16,
+          damage: beamDmg,
+          ttl: 36,
+          pierce: false,
+          bouncesLeft: 0,
+          color: armor === 11 ? '#fef08a' : '#fde047',
+        });
+        state.events.push({
+          type: 'particle',
+          kind: 'spark',
+          x: p.x + p.w * 0.5,
+          y: p.y + p.h,
+          color: '#fde047',
+          count: 6,
+        });
+      }
     }
 
     const sfxKey =
@@ -784,22 +1048,23 @@ export function stepCombat(
           : 'jab';
     state.events.push({ type: 'sfx', key: sfxKey });
 
-    // Clone Array (Burst 9): echo attack with a forward plasma bolt
+    // Clone Array (Burst 9): echo attack with a synchronized piercing photonic wave
     if (p.cloneTimer > 0) {
+      const cloneDmg = Math.round(1.5 * getBurstDamageMultiplier(state) * 100) / 100;
       spawnProjectile(state, {
         owner: 'player',
         kind: 'burst_beam',
-        x: p.x + (p.facing === 1 ? p.w : -14),
+        x: p.x + (p.facing === 1 ? p.w : -16),
         y: p.y + 6,
         vx: p.facing * 7.5,
         vy: 0,
-        w: 14,
-        h: 8,
-        damage: 1.5,
+        w: 16,
+        h: 10,
+        damage: cloneDmg,
         ttl: 34,
         pierce: true,
         bouncesLeft: 0,
-        color: '#22d3ee',
+        color: '#7cffcb',
       });
     }
   }
@@ -891,8 +1156,14 @@ export function stepCombat(
         freezeTicks: spec.freezeTicks,
         onEnemyDefeated: hooks?.onEnemyDefeated,
       });
-      if (hit && spec.bounceOnHit) {
-        bounced = true;
+      if (hit) {
+        // Armor Paint 4 (Volt Surge) & 11 (Apex Prismatic): emit electric_arc spark on melee hit
+        if (armor === 4 || armor === 11) {
+          emitVoltMeleeSpark(state, enemy.id, enemy.x + enemy.w * 0.5, enemy.y + enemy.h * 0.5);
+        }
+        if (spec.bounceOnHit) {
+          bounced = true;
+        }
       }
     }
 
@@ -906,8 +1177,13 @@ export function stepCombat(
           freezeTicks: spec.freezeTicks,
           onBossDefeated: hooks?.onBossDefeated,
         });
-        if (hit && spec.bounceOnHit) {
-          bounced = true;
+        if (hit) {
+          if (armor === 4 || armor === 11) {
+            emitVoltMeleeSpark(state, boss.id, boss.x + boss.w * 0.5, boss.y + boss.h * 0.5);
+          }
+          if (spec.bounceOnHit) {
+            bounced = true;
+          }
         }
       }
     }
@@ -920,6 +1196,17 @@ export function stepCombat(
         p.diveKickTicks = 0;
         p.attackId = null;
         p.attackTimer = 0;
+        const streak = (diveBounceStreakMap.get(p) ?? 0) + 1;
+        diveBounceStreakMap.set(p, streak);
+        if (streak >= 3 && !state.progression.unlockedChallenges.includes('chal_dive_bounce')) {
+          state.progression.unlockedChallenges.push('chal_dive_bounce');
+          state.progression.bits += 120;
+          state.events.push({
+            type: 'challengeUnlock',
+            id: 'chal_dive_bounce',
+            name: 'Skyward Rebound',
+          });
+        }
       } else if (spec.id === 'sprintKick') {
         p.vx = -p.facing * 2.0;
         p.vy = -2.8;
@@ -936,6 +1223,7 @@ export function explodeAt(
   radius: number,
   damage: number,
   hooks?: CombatHooks,
+  isBurst = false,
 ): void {
   const box: Aabb = { x: cx - radius, y: cy - radius, w: radius * 2, h: radius * 2 };
   shatterBreakablesInBox(state, box);
@@ -954,6 +1242,7 @@ export function explodeAt(
         knockbackY: -3.5,
         sourceX: cx,
         freezeTicks: 3,
+        isBurst,
         onEnemyDefeated: hooks?.onEnemyDefeated,
       });
     }
@@ -967,6 +1256,7 @@ export function explodeAt(
       damageBoss(state, boss, damage, {
         armorBreak: true,
         freezeTicks: 3,
+        isBurst,
         onBossDefeated: hooks?.onBossDefeated,
       });
     }
@@ -987,6 +1277,30 @@ export function explodeAt(
   });
 }
 
+function segmentIntersectsBox(
+  x0: number,
+  y0: number,
+  x1: number,
+  y1: number,
+  box: Aabb,
+): boolean {
+  const steps = Math.max(1, Math.ceil(Math.hypot(x1 - x0, y1 - y0) / 6));
+  for (let s = 0; s <= steps; s++) {
+    const t = s / steps;
+    const px = x0 + (x1 - x0) * t;
+    const py = y0 + (y1 - y0) * t;
+    if (
+      px >= box.x - 4 &&
+      px <= box.x + box.w + 4 &&
+      py >= box.y - 4 &&
+      py <= box.y + box.h + 4
+    ) {
+      return true;
+    }
+  }
+  return false;
+}
+
 export function stepProjectiles(state: SimState, hooks?: CombatHooks): void {
   const p = state.player;
   const frozen = p.freezeFieldTimer > 0;
@@ -995,16 +1309,43 @@ export function stepProjectiles(state: SimState, hooks?: CombatHooks): void {
     const proj = state.projectiles[i];
     proj.ttl -= 1;
     if (proj.ttl <= 0) {
+      // Hologram mine detonates cleanly on expiration as well
+      if (proj.kind === 'hologram_mine') {
+        explodeAt(
+          state,
+          proj.x + proj.w * 0.5,
+          proj.y + proj.h * 0.5,
+          44,
+          proj.damage,
+          hooks,
+          true,
+        );
+      }
       state.projectiles.splice(i, 1);
       continue;
     }
 
-    // Solid support platform stays static
+    // Solid support platform stays static & can be hookshot-grabbed and thrown!
     if (proj.kind === 'support_platform') {
+      if (p.hook.phase === 'extending') {
+        const originX = p.x + p.w * 0.5;
+        const originY = p.y + p.h * 0.5;
+        if (segmentIntersectsBox(originX, originY, p.hook.tipX, p.hook.tipY, proj)) {
+          p.hook.phase = 'holding';
+          p.hook.heldKind = 'platform';
+          p.hook.heldEntityId = proj.id;
+          p.hook.heldSpriteKey = 'support_platform';
+          p.hook.heldDamage = Math.max(HOOKSHOT_CONSTANTS.THROW_COLLISION_DAMAGE, proj.damage);
+          p.hook.tipX = originX;
+          p.hook.tipY = p.y - 10;
+          state.events.push({ type: 'sfx', key: 'hook_grab' });
+          state.projectiles.splice(i, 1);
+        }
+      }
       continue;
     }
 
-    // Hologram mine proximity detonation
+    // Hologram mine decoy + proximity detonation
     if (proj.kind === 'hologram_mine') {
       const mcx = proj.x + proj.w * 0.5;
       const mcy = proj.y + proj.h * 0.5;
@@ -1012,7 +1353,13 @@ export function stepProjectiles(state: SimState, hooks?: CombatHooks): void {
       for (let j = 0; j < state.enemies.length; j++) {
         const e = state.enemies[j];
         if (!e.dead && !e.grabbed) {
-          const distSq = (e.x + e.w * 0.5 - mcx) ** 2 + (e.y + e.h * 0.5 - mcy) ** 2;
+          const dx = mcx - (e.x + e.w * 0.5);
+          const dy = mcy - (e.y + e.h * 0.5);
+          const distSq = dx * dx + dy * dy;
+          if (distSq <= 96 * 96 && distSq > 32 * 32) {
+            // Decoy draws nearby enemies toward the hologram
+            e.facing = dx >= 0 ? 1 : -1;
+          }
           if (distSq <= 32 * 32) {
             triggered = true;
             break;
@@ -1022,12 +1369,12 @@ export function stepProjectiles(state: SimState, hooks?: CombatHooks): void {
       if (!triggered && state.boss && state.boss.active && !state.boss.defeated) {
         const b = state.boss;
         const distSq = (b.x + b.w * 0.5 - mcx) ** 2 + (b.y + b.h * 0.5 - mcy) ** 2;
-        if (distSq <= 40 * 40) {
+        if (distSq <= 42 * 42) {
           triggered = true;
         }
       }
       if (triggered) {
-        explodeAt(state, mcx, mcy, 44, proj.damage, hooks);
+        explodeAt(state, mcx, mcy, 48, proj.damage, hooks, true);
         state.projectiles.splice(i, 1);
       }
       continue;
@@ -1037,19 +1384,25 @@ export function stepProjectiles(state: SimState, hooks?: CombatHooks): void {
     const timeScale =
       frozen && (proj.owner === 'enemy' || proj.owner === 'boss') ? 0.15 : 1.0;
 
-    // Electric arc gently homes toward nearest unhit enemy
+    // Electric arc homes toward nearest unhit enemy OR active boss
     if (proj.kind === 'electric_arc' && proj.owner === 'player') {
-      let bestDistSq = 96 * 96;
+      const strongHoming = proj.w >= 12; // Current Arc (Burst 17)
+      const range = strongHoming ? 180 : 96;
+      const blend = strongHoming ? 0.26 : 0.18;
+      let bestDistSq = range * range;
       let targetX = 0;
       let targetY = 0;
       let found = false;
+      const pcx = proj.x + proj.w * 0.5;
+      const pcy = proj.y + proj.h * 0.5;
+
       for (let j = 0; j < state.enemies.length; j++) {
         const e = state.enemies[j];
         if (e.dead || e.grabbed || proj.hitIds.includes(e.id)) {
           continue;
         }
-        const dx = e.x + e.w * 0.5 - (proj.x + proj.w * 0.5);
-        const dy = e.y + e.h * 0.5 - (proj.y + proj.h * 0.5);
+        const dx = e.x + e.w * 0.5 - pcx;
+        const dy = e.y + e.h * 0.5 - pcy;
         const dSq = dx * dx + dy * dy;
         if (dSq < bestDistSq) {
           bestDistSq = dSq;
@@ -1058,10 +1411,25 @@ export function stepProjectiles(state: SimState, hooks?: CombatHooks): void {
           found = true;
         }
       }
+
+      const boss = state.boss;
+      if (boss && boss.active && !boss.defeated && !proj.hitIds.includes(boss.id)) {
+        const dx = boss.x + boss.w * 0.5 - pcx;
+        const dy = boss.y + boss.h * 0.5 - pcy;
+        const dSq = dx * dx + dy * dy;
+        if (dSq < bestDistSq) {
+          bestDistSq = dSq;
+          targetX = dx;
+          targetY = dy;
+          found = true;
+        }
+      }
+
       if (found) {
         const len = Math.max(0.001, Math.hypot(targetX, targetY));
-        proj.vx = proj.vx * 0.8 + (targetX / len) * 5.2 * 0.2;
-        proj.vy = proj.vy * 0.8 + (targetY / len) * 5.2 * 0.2;
+        const speed = strongHoming ? 5.6 : 5.2;
+        proj.vx = proj.vx * (1 - blend) + (targetX / len) * speed * blend;
+        proj.vy = proj.vy * (1 - blend) + (targetY / len) * speed * blend;
       }
     }
 
@@ -1079,7 +1447,8 @@ export function stepProjectiles(state: SimState, hooks?: CombatHooks): void {
       const ry = moveAndCollideY(state, proj, proj.vy, false);
       proj.y = ry.y;
 
-      const isDroppedShield = proj.kind === 'thrown_shield' && speedMag < 4.5 && proj.bouncesLeft <= 2;
+      const isDroppedShield =
+        proj.kind === 'thrown_shield' && speedMag < 4.5 && proj.bouncesLeft <= 2;
 
       if (rx.hitX || ry.hitY) {
         if (proj.kind === 'thrown_barrel' && speedMag >= 2.2) {
@@ -1107,7 +1476,14 @@ export function stepProjectiles(state: SimState, hooks?: CombatHooks): void {
           });
         } else {
           if (proj.kind === 'thrown_barrel' || proj.kind === 'thrown_enemy') {
-            explodeAt(state, proj.x + proj.w * 0.5, proj.y + proj.h * 0.5, 36, HOOKSHOT_CONSTANTS.THROW_BOUNCE_DAMAGE, hooks);
+            explodeAt(
+              state,
+              proj.x + proj.w * 0.5,
+              proj.y + proj.h * 0.5,
+              36,
+              HOOKSHOT_CONSTANTS.THROW_BOUNCE_DAMAGE,
+              hooks,
+            );
           } else {
             state.events.push({ type: 'sfx', key: 'breakable' });
           }
@@ -1128,6 +1504,9 @@ export function stepProjectiles(state: SimState, hooks?: CombatHooks): void {
             continue;
           }
           proj.hitIds.push(e.id);
+          if (proj.hitIds.length >= 2) {
+            evaluateChallenges(state);
+          }
           const dmg = proj.damage;
           damageEnemy(state, e, dmg, {
             armorBreak: true,
@@ -1173,7 +1552,14 @@ export function stepProjectiles(state: SimState, hooks?: CombatHooks): void {
               onBossDefeated: hooks?.onBossDefeated,
             });
             if (proj.kind === 'thrown_barrel') {
-              explodeAt(state, proj.x + proj.w * 0.5, proj.y + proj.h * 0.5, 40, HOOKSHOT_CONSTANTS.THROW_BOUNCE_DAMAGE, hooks);
+              explodeAt(
+                state,
+                proj.x + proj.w * 0.5,
+                proj.y + proj.h * 0.5,
+                40,
+                HOOKSHOT_CONSTANTS.THROW_BOUNCE_DAMAGE,
+                hooks,
+              );
             }
             remove = true;
           }
@@ -1217,7 +1603,11 @@ export function stepProjectiles(state: SimState, hooks?: CombatHooks): void {
           }
           proj.hitIds.push(e.id);
           damageEnemy(state, e, proj.damage, {
-            armorBreak: proj.kind === 'burst_beam' || proj.kind === 'shockwave' || proj.kind === 'dive_beam',
+            armorBreak:
+              proj.kind === 'burst_beam' ||
+              proj.kind === 'shockwave' ||
+              proj.kind === 'dive_beam' ||
+              proj.kind === 'phase_ball',
             knockbackX: 2.5,
             knockbackY: -1.8,
             sourceX: proj.x + proj.w * 0.5,
@@ -1235,7 +1625,10 @@ export function stepProjectiles(state: SimState, hooks?: CombatHooks): void {
           if (aabbOverlap(proj, boss)) {
             proj.hitIds.push(boss.id);
             damageBoss(state, boss, proj.damage, {
-              armorBreak: proj.kind === 'burst_beam' || proj.kind === 'shockwave',
+              armorBreak:
+                proj.kind === 'burst_beam' ||
+                proj.kind === 'shockwave' ||
+                proj.kind === 'dive_beam',
               freezeTicks: 2,
               isBurst: true,
               onBossDefeated: hooks?.onBossDefeated,
@@ -1247,9 +1640,29 @@ export function stepProjectiles(state: SimState, hooks?: CombatHooks): void {
         }
       } else if (!remove && (proj.owner === 'enemy' || proj.owner === 'boss')) {
         if (aabbOverlap(proj, p)) {
-          applyDamageToPlayer(state, proj.damage, proj.x + proj.w * 0.5);
-          if (!proj.pierce) {
+          // Catch Block chip (ID 6): frontal energy guard blocks shots while holding an object
+          const projCx = proj.x + proj.w * 0.5;
+          const pCx = p.x + p.w * 0.5;
+          const fromFront =
+            (p.facing === 1 && projCx >= pCx - 2) || (p.facing === -1 && projCx <= pCx + 2);
+          if (hasChip(state, 6) && p.hook.phase === 'holding' && !proj.pierce && fromFront) {
+            state.events.push(
+              { type: 'sfx', key: 'switch', pitchJitter: 0.1 },
+              {
+                type: 'particle',
+                kind: 'spark',
+                x: projCx,
+                y: proj.y + proj.h * 0.5,
+                color: '#38bdf8',
+                count: 6,
+              },
+            );
             remove = true;
+          } else {
+            applyDamageToPlayer(state, proj.damage, projCx);
+            if (!proj.pierce) {
+              remove = true;
+            }
           }
         }
       }

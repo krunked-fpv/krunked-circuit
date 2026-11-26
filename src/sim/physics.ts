@@ -3,6 +3,7 @@ import {
   PLAYER_PHYSICS,
   TileType,
   type InputFrame,
+  type PlayerState,
   type SimState,
 } from '../contracts/index';
 import {
@@ -15,22 +16,31 @@ import {
   isSolidTile,
   moveAndCollideX,
   moveAndCollideY,
+  type Aabb,
 } from './collision';
 import {
   applyHazardDamage,
+  damageBoss,
   damageEnemy,
   getActiveArmorPaint,
   hasChip,
+  resetDiveBounceStreak,
+  spawnProjectile,
   type CombatHooks,
 } from './combat';
+import { evaluateChallenges } from './progression';
 
 // ============================================================================
-// Pure 60 Hz Player Physics, Ledge/Wall Tech, Flowing Scarf & Cell Camera
+// Pure 60 Hz Player Physics, Ledge/Wall Tech, Armor Movement, Scarf & Cell Camera
 // ============================================================================
 
 const TS = ENGINE_CONSTANTS.TILE_SIZE;
 const CELL_W = ENGINE_CONSTANTS.CELL_TILES_W * TS; // 400
 const CELL_H = ENGINE_CONSTANTS.CELL_TILES_H * TS; // 240
+
+// Pure per-PlayerState Cryo Glide air-slide state (isolated per SimState, deterministic)
+const cryoAirSlideUsedMap = new WeakMap<PlayerState, boolean>();
+const cryoAirSlideActiveMap = new WeakMap<PlayerState, boolean>();
 
 function approach(current: number, target: number, maxDelta: number): number {
   if (current < target) {
@@ -121,6 +131,7 @@ function tryStandUp(state: SimState): boolean {
   if (p.h === PLAYER_PHYSICS.STAND_H) {
     p.crouching = false;
     p.sliding = false;
+    cryoAirSlideActiveMap.delete(p);
     return true;
   }
   const standTopY = p.y + p.h - PLAYER_PHYSICS.STAND_H;
@@ -130,11 +141,13 @@ function tryStandUp(state: SimState): boolean {
     p.h = PLAYER_PHYSICS.STAND_H;
     p.crouching = false;
     p.sliding = false;
+    cryoAirSlideActiveMap.delete(p);
     return true;
   }
   // Ceiling-wedge safety: remain safely crouched until full 14x28 clearance exists
   p.crouching = true;
   p.sliding = false;
+  cryoAirSlideActiveMap.delete(p);
   return false;
 }
 
@@ -151,10 +164,9 @@ export function getMaxHorizontalSpeed(state: SimState, sprinting: boolean): numb
       ? PLAYER_PHYSICS.SPRINT_MAX_SPEED
       : PLAYER_PHYSICS.WALK_MAX_SPEED;
   }
-  if (armor === 5) {
-    base += PLAYER_PHYSICS.SPEED_ARMOR_BONUS; // Speed Armor +0.50
-  } else if (armor === 11) {
-    base += 0.25; // Apex Armor
+  if (armor === 5 || armor === 11) {
+    // Aero Teal (5) & Apex Prismatic (11): +0.50 px/tick horizontal speed
+    base += PLAYER_PHYSICS.SPEED_ARMOR_BONUS;
   }
   return base;
 }
@@ -171,8 +183,15 @@ export function updatePhysics(
 
   // Hookshot zip & pendulum swing own player locomotion while active
   if (p.hook.phase === 'latched_wall' || p.hook.phase === 'swinging') {
+    if (p.hook.phase === 'swinging' && p.hook.timer >= 5) {
+      evaluateChallenges(state);
+    }
     return;
   }
+
+  // Mirror World modifier cleanly flips horizontal steering & environmental forces
+  const mirrored = state.progression.modifiers.mirrorWorld;
+  const moveX = (mirrored ? -input.moveX : input.moveX) as -1 | 0 | 1;
 
   // Buffer jump press
   if (input.jumpPressed) {
@@ -185,6 +204,9 @@ export function updatePhysics(
     p.vy = 0;
     p.grounded = false;
     p.onWall = 0;
+    cryoAirSlideUsedMap.delete(p);
+    cryoAirSlideActiveMap.delete(p);
+    resetDiveBounceStreak(p);
 
     if (input.moveY === -1 || input.jumpPressed) {
       // Climb up cleanly onto ledge top
@@ -215,10 +237,12 @@ export function updatePhysics(
   const armor = getActiveArmorPaint(state);
   const inHurtKnockback = p.hurtTimer > 0;
   let dropThroughOneWay = false;
+  const inCryoAirSlide = Boolean(cryoAirSlideActiveMap.get(p));
 
-  // ---------------- CROUCH / SLIDE / ONE-WAY DROP ----------------
+  // ---------------- CROUCH / SLIDE / CRYO AIR-SLIDE / ONE-WAY DROP ----------------
   if (!inHurtKnockback) {
     if (p.grounded) {
+      cryoAirSlideUsedMap.delete(p);
       const wantsOneWayDrop =
         input.moveY === 1 && input.jumpPressed && isStandingOnOneWayOnly(state);
 
@@ -236,17 +260,18 @@ export function updatePhysics(
         !p.sliding &&
         p.slideCooldown <= 0
       ) {
-        // Start slide (14x14 collider)
+        // Start ground slide (14x14 collider)
         enterCrouchCollider(state);
         p.sliding = true;
+        cryoAirSlideActiveMap.delete(p);
         p.slideTimer = PLAYER_PHYSICS.SLIDE_DURATION_TICKS;
         p.jumpBufferTick = -999;
-        if (input.moveX !== 0) {
-          p.facing = input.moveX;
+        if (moveX !== 0) {
+          p.facing = moveX;
         }
         const slideSpeed =
           PLAYER_PHYSICS.SLIDE_SPEED +
-          (armor === 5 ? PLAYER_PHYSICS.SPEED_ARMOR_BONUS : 0) +
+          (armor === 5 || armor === 11 ? PLAYER_PHYSICS.SPEED_ARMOR_BONUS : 0) +
           (p.overloadTimer > 0 ? 0.75 : 0);
         p.vx = p.facing * slideSpeed;
         state.events.push({ type: 'sfx', key: 'slide' });
@@ -258,23 +283,102 @@ export function updatePhysics(
           color: '#cbd5e1',
           count: 5,
         });
+
+        // Armor Paint 8 (Phase Violet): Ground Slide fires a piercing phase_ball warp orb forward!
+        if (armor === 8) {
+          spawnProjectile(state, {
+            owner: 'player',
+            kind: 'phase_ball',
+            x: p.x + (p.facing === 1 ? p.w : -12),
+            y: p.y + 1,
+            vx: p.facing * 6.4,
+            vy: 0,
+            w: 12,
+            h: 12,
+            damage: 2,
+            ttl: 40,
+            pierce: true,
+            bouncesLeft: 0,
+            color: '#8b5cf6',
+          });
+          state.events.push({
+            type: 'particle',
+            kind: 'spark',
+            x: p.x + (p.facing === 1 ? p.w : 0),
+            y: p.y + p.h * 0.5,
+            color: '#8b5cf6',
+            count: 7,
+          });
+        }
       }
+    } else if (
+      // Armor Paint 3 (Cryo Glide): airborne Slide executes a horizontal Cryo Air-Slide burst (once per jump)
+      armor === 3 &&
+      input.slidePressed &&
+      !p.sliding &&
+      p.slideCooldown <= 0 &&
+      !cryoAirSlideUsedMap.get(p)
+    ) {
+      cryoAirSlideUsedMap.set(p, true);
+      cryoAirSlideActiveMap.set(p, true);
+      enterCrouchCollider(state);
+      p.sliding = true;
+      p.slideTimer = 14;
+      if (moveX !== 0) {
+        p.facing = moveX;
+      }
+      const airSlideSpeed =
+        PLAYER_PHYSICS.SLIDE_SPEED + 0.75 + (p.overloadTimer > 0 ? 0.75 : 0);
+      p.vx = p.facing * airSlideSpeed;
+      p.vy = 0;
+      state.events.push(
+        { type: 'sfx', key: 'slide', pitchJitter: 0.14 },
+        {
+          type: 'particle',
+          kind: 'spark',
+          x: p.x + p.w * 0.5,
+          y: p.y + p.h * 0.5,
+          color: '#38bdf8',
+          count: 8,
+        },
+      );
     }
 
+    const currentlyCryoAirSliding = Boolean(cryoAirSlideActiveMap.get(p));
     if (p.sliding) {
       p.slideTimer -= 1;
-      // Allow reversing or aborting slide early if opposite direction pressed and standing is clear
-      const hitOpposite = input.moveX !== 0 && input.moveX === -p.facing;
-      if (p.slideTimer <= 0 || hitOpposite || !p.grounded) {
+      const hitOpposite = moveX !== 0 && moveX === -p.facing;
+      const shouldEnd = currentlyCryoAirSliding
+        ? p.slideTimer <= 0 || hitOpposite || p.grounded
+        : p.slideTimer <= 0 || hitOpposite || !p.grounded;
+
+      if (shouldEnd) {
         p.sliding = false;
+        cryoAirSlideActiveMap.delete(p);
         p.slideCooldown = PLAYER_PHYSICS.SLIDE_COOLDOWN_TICKS;
         tryStandUp(state);
+      } else if (currentlyCryoAirSliding) {
+        const airSlideSpeed =
+          PLAYER_PHYSICS.SLIDE_SPEED + 0.75 + (p.overloadTimer > 0 ? 0.75 : 0);
+        p.vx = p.facing * airSlideSpeed;
+        p.vy = 0;
+        if (p.slideTimer % 3 === 0) {
+          state.events.push({
+            type: 'particle',
+            kind: 'spark',
+            x: p.x + p.w * 0.5,
+            y: p.y + p.h * 0.5,
+            color: '#a5f3fc',
+            count: 3,
+          });
+        }
       } else {
         const slideSpeed =
           PLAYER_PHYSICS.SLIDE_SPEED +
-          (armor === 5 ? PLAYER_PHYSICS.SPEED_ARMOR_BONUS : 0) +
+          (armor === 5 || armor === 11 ? PLAYER_PHYSICS.SPEED_ARMOR_BONUS : 0) +
           (p.overloadTimer > 0 ? 0.75 : 0);
         p.vx = p.facing * slideSpeed;
+        evaluateChallenges(state);
       }
     } else if (p.grounded && input.moveY === 1) {
       enterCrouchCollider(state);
@@ -282,6 +386,8 @@ export function updatePhysics(
       // Continuously check ceiling-wedge safety until full 14x28 clearance exists
       tryStandUp(state);
     }
+  } else if (inCryoAirSlide) {
+    cryoAirSlideActiveMap.delete(p);
   }
 
   // ---------------- HORIZONTAL VELOCITY ----------------
@@ -290,27 +396,30 @@ export function updatePhysics(
     const isDiving = p.attackId === 'diveKick' || p.attackId === 'diveKickHeavy';
 
     if (canSteer && !isDiving) {
-      if (input.moveX !== 0 && p.attackTimer <= 0) {
-        p.facing = input.moveX;
+      if (moveX !== 0 && p.attackTimer <= 0) {
+        p.facing = moveX;
       }
 
       const maxSpeed = p.crouching
         ? 1.6
         : getMaxHorizontalSpeed(state, input.sprint);
-      const targetVx = input.moveX * maxSpeed;
+      const targetVx = moveX * maxSpeed;
 
       let accel: number;
       if (p.grounded) {
-        const onSlipperyIce = p.onIce && armor !== 3; // Cooler Armor (3) grants ice traction
+        const onSlipperyIce = p.onIce && armor !== 3; // Cryo Glide (3) grants full ice traction
         if (onSlipperyIce) {
           accel = PLAYER_PHYSICS.ICE_FRICTION;
-        } else if (input.moveX !== 0 && Math.sign(p.vx) !== 0 && Math.sign(p.vx) !== input.moveX) {
+        } else if (armor === 5 && moveX === 0 && Math.abs(p.vx) > 0.1) {
+          // Aero Teal (5): low-friction momentum skate when coasting
+          accel = 0.16;
+        } else if (moveX !== 0 && Math.sign(p.vx) !== 0 && Math.sign(p.vx) !== moveX) {
           accel = PLAYER_PHYSICS.RUNNING_FRICTION_TURN;
         } else {
           accel = PLAYER_PHYSICS.RUNNING_FRICTION;
         }
       } else {
-        accel = input.moveX !== 0 ? (armor === 8 ? 0.45 : 0.35) : 0.08;
+        accel = moveX !== 0 ? (armor === 8 ? 0.45 : 0.35) : 0.08;
       }
 
       p.vx = approach(p.vx, targetVx, accel);
@@ -318,9 +427,10 @@ export function updatePhysics(
   }
 
   // Apply environmental wind gently when not actively braced against ground
+  const effWindForce = mirrored ? -state.windForce : state.windForce;
   let windVx = 0;
-  if (state.windForce !== 0) {
-    windVx = p.grounded ? state.windForce * 0.35 : state.windForce * 0.65;
+  if (effWindForce !== 0) {
+    windVx = p.grounded ? effWindForce * 0.35 : effWindForce * 0.65;
   }
 
   // ---------------- JUMP, COYOTE, WALL-JUMP, AIR-JUMPER ----------------
@@ -338,7 +448,7 @@ export function updatePhysics(
     : 0;
   const wallBufferWindow =
     PLAYER_PHYSICS.WALL_JUMP_BUFFER_MAX +
-    (p.wallJumpDir !== 0 && input.moveX === p.wallJumpDir
+    (p.wallJumpDir !== 0 && moveX === p.wallJumpDir
       ? PLAYER_PHYSICS.WALL_JUMP_STEER_AWAY_BONUS
       : 0);
   const withinWallBuffer =
@@ -354,6 +464,7 @@ export function updatePhysics(
         p.vy = PLAYER_PHYSICS.JUMP_IMPULSE;
         p.grounded = false;
         p.sliding = false;
+        cryoAirSlideActiveMap.delete(p);
         p.leftGroundTick = -999;
         p.jumpBufferTick = -999;
         p.airJumpsUsed = 0;
@@ -385,6 +496,8 @@ export function updatePhysics(
       p.onWall = 0;
       p.airJumpsUsed = 0;
       p.diveKickTicks = 0;
+      cryoAirSlideUsedMap.delete(p);
+      cryoAirSlideActiveMap.delete(p);
       state.events.push({ type: 'sfx', key: 'wall_jump' });
       state.events.push({
         type: 'particle',
@@ -405,6 +518,7 @@ export function updatePhysics(
             : PLAYER_PHYSICS.TRIPLE_JUMP_IMPULSE;
         p.jumpBufferTick = -999;
         p.diveKickTicks = 0;
+        cryoAirSlideActiveMap.delete(p);
         if (p.attackId === 'diveKick' || p.attackId === 'diveKickHeavy') {
           p.attackId = null;
           p.attackTimer = 0;
@@ -428,31 +542,43 @@ export function updatePhysics(
   }
 
   // ---------------- GRAVITY, LIGHT ALLOY, FAST-FALL ----------------
-  let grav: number = PLAYER_PHYSICS.GRAVITY;
-  if (!p.grounded && hasChip(state, 11) && input.jump && Math.abs(p.vy) < 1.5) {
-    grav *= 0.55; // Light Alloy low-grav apex float
-  }
-  p.vy += grav;
+  const activeCryoGlide = Boolean(cryoAirSlideActiveMap.get(p)) && p.sliding;
+  if (!activeCryoGlide) {
+    let grav: number = PLAYER_PHYSICS.GRAVITY;
+    const isLightAlloyFloating =
+      !p.grounded && hasChip(state, 11) && input.jump && p.vy >= -1.5;
+    if (isLightAlloyFloating) {
+      grav *= 0.55; // Light Alloy (Chip 11) low-grav hold-jump float
+    }
+    p.vy += grav;
 
-  if (!p.grounded && input.moveY === 1 && p.vy >= PLAYER_PHYSICS.FAST_FALL_VY_THRESHOLD) {
-    p.vy += PLAYER_PHYSICS.FAST_FALL_ACCEL;
-  }
+    if (!p.grounded && input.moveY === 1 && p.vy >= PLAYER_PHYSICS.FAST_FALL_VY_THRESHOLD) {
+      p.vy += PLAYER_PHYSICS.FAST_FALL_ACCEL;
+    }
 
-  const maxFall =
-    PLAYER_PHYSICS.MAX_FALL_SPEED +
-    (armor === 7 ? PLAYER_PHYSICS.HEAVY_ARMOR_FALL_BONUS : 0);
-  if (p.vy > maxFall) {
-    p.vy = maxFall;
+    let maxFall =
+      PLAYER_PHYSICS.MAX_FALL_SPEED +
+      (armor === 7 ? PLAYER_PHYSICS.HEAVY_ARMOR_FALL_BONUS : 0); // Quake Amber: 8.75
+    if (isLightAlloyFloating && input.moveY !== 1) {
+      maxFall = Math.min(maxFall, 2.2);
+    }
+    if (p.vy > maxFall) {
+      p.vy = maxFall;
+    }
   }
 
   // ---------------- MOVE & COLLIDE X ----------------
   const wasGrounded = p.grounded;
+  const prevBottom = p.y + p.h;
+  const impactVy = p.vy;
+
   const resX = moveAndCollideX(state, p, p.vx + windVx);
   p.x = resX.x;
   if (resX.hitX) {
     p.vx = 0;
     if (p.sliding) {
       p.sliding = false;
+      cryoAirSlideActiveMap.delete(p);
       p.slideCooldown = PLAYER_PHYSICS.SLIDE_COOLDOWN_TICKS;
       tryStandUp(state);
     }
@@ -464,15 +590,34 @@ export function updatePhysics(
   p.grounded = resY.grounded;
   p.onIce = resY.onIce;
 
-  // Transfer conveyor velocity cleanly when grounded
-  if (p.grounded && resY.conveyorVx !== 0) {
-    const convX = moveAndCollideX(state, p, resY.conveyorVx);
+  // Explicit Support Platform 1-way rideable landing safeguard
+  if (!dropThroughOneWay && p.vy >= 0 && !p.grounded) {
+    for (let i = 0; i < state.projectiles.length; i++) {
+      const proj = state.projectiles[i];
+      if (proj.kind !== 'support_platform' || !proj.solid || proj.ttl <= 0) {
+        continue;
+      }
+      if (p.x + p.w > proj.x && p.x < proj.x + proj.w) {
+        if (prevBottom <= proj.y + 3.0 && p.y + p.h >= proj.y) {
+          p.y = proj.y - p.h;
+          p.vy = 0;
+          p.grounded = true;
+          break;
+        }
+      }
+    }
+  }
+
+  // Transfer conveyor velocity cleanly when grounded (flipped in Mirror World)
+  const effConveyorVx = mirrored ? -resY.conveyorVx : resY.conveyorVx;
+  if (p.grounded && effConveyorVx !== 0) {
+    const convX = moveAndCollideX(state, p, effConveyorVx);
     p.x = convX.x;
   }
 
-  if (resY.hitY) {
-    if (p.vy >= 0 && p.grounded) {
-      if (!wasGrounded && p.vy >= 2.5) {
+  if (resY.hitY || p.grounded) {
+    if (impactVy >= 0 && p.grounded) {
+      if (!wasGrounded && impactVy >= 2.5) {
         state.events.push({ type: 'sfx', key: 'land' });
         state.events.push({
           type: 'particle',
@@ -482,12 +627,49 @@ export function updatePhysics(
           color: '#cbd5e1',
           count: 4,
         });
+
+        // Armor Paint 7 (Quake Amber): landing from high fall emits ground shockwave projectiles left & right!
+        if (armor === 7 && impactVy >= 5.0) {
+          const cx = p.x + p.w * 0.5;
+          for (const dir of [-1, 1] as const) {
+            spawnProjectile(state, {
+              owner: 'player',
+              kind: 'shockwave',
+              x: cx - 8 + dir * 10,
+              y: p.y + p.h - 14,
+              vx: dir * 5.2,
+              vy: 0,
+              w: 16,
+              h: 14,
+              damage: 2,
+              ttl: 30,
+              pierce: true,
+              bouncesLeft: 0,
+              color: '#f97316',
+            });
+          }
+          state.camera.shakeTimer = Math.max(state.camera.shakeTimer, 6);
+          state.camera.shakeIntensity = Math.max(state.camera.shakeIntensity, 2.2);
+          state.events.push(
+            { type: 'sfx', key: 'heavy_hit', gain: 0.85 },
+            {
+              type: 'particle',
+              kind: 'shockring',
+              x: cx,
+              y: p.y + p.h,
+              color: '#f97316',
+              count: 10,
+            },
+          );
+        }
       }
       p.vy = 0;
       p.airJumpsUsed = 0;
       p.onWall = 0;
       p.wallJumpLockTimer = 0;
-    } else if (p.vy < 0) {
+      cryoAirSlideUsedMap.delete(p);
+      resetDiveBounceStreak(p);
+    } else if (resY.hitY && p.vy < 0) {
       p.vy = 0;
     }
   }
@@ -520,10 +702,12 @@ export function updatePhysics(
   // ---------------- WALL-SLIDE & LEDGE GRAB ----------------
   if (!p.grounded && !inHurtKnockback) {
     const wall = detectWallContact(state, p, 1.0);
-    if (wall !== 0 && (input.moveX === wall || p.vy > 0)) {
+    if (wall !== 0 && (moveX === wall || p.vy > 0)) {
       p.onWall = wall;
       p.wallJumpDir = (-wall) as -1 | 1;
       p.wallJumpBufferTick = state.tick;
+      cryoAirSlideUsedMap.delete(p);
+      resetDiveBounceStreak(p);
 
       if (p.vy > 0) {
         const hasGrip = hasChip(state, 4);
@@ -556,6 +740,8 @@ export function updatePhysics(
         p.facing = ledge.side;
         p.onWall = 0;
         p.airJumpsUsed = 0;
+        cryoAirSlideUsedMap.delete(p);
+        cryoAirSlideActiveMap.delete(p);
         state.events.push({ type: 'sfx', key: 'ledge_grab' });
       }
     }
@@ -563,19 +749,82 @@ export function updatePhysics(
     p.onWall = 0;
   }
 
+  // ---------------- ARMOR PAINT 6 (RHYTHM COBALT): PIROUETTE JUMP ATTACK ----------------
+  if (!inHurtKnockback && armor === 6 && !p.grounded && p.vy < -0.5) {
+    const spinBox: Aabb = {
+      x: p.x - 6,
+      y: p.y - 4,
+      w: p.w + 12,
+      h: p.h + 6,
+    };
+    const spinDmg =
+      p.overloadTimer > 0
+        ? Math.round(1 * PLAYER_PHYSICS.OVERLOAD_DAMAGE_MULT * 100) / 100
+        : 1;
+    let connected = false;
+
+    for (let i = 0; i < state.enemies.length; i++) {
+      const e = state.enemies[i];
+      if (e.dead || e.grabbed || e.hurtFlash > 0) continue;
+      if (aabbOverlap(spinBox, e)) {
+        const hit = damageEnemy(state, e, spinDmg, {
+          armorBreak: false,
+          knockbackX: 2.0,
+          knockbackY: -2.2,
+          sourceX: p.x + p.w * 0.5,
+          freezeTicks: 1,
+          onEnemyDefeated: hooks?.onEnemyDefeated,
+        });
+        if (hit) connected = true;
+      }
+    }
+
+    const boss = state.boss;
+    if (boss && boss.active && !boss.defeated && boss.invulnTimer === 0 && aabbOverlap(spinBox, boss)) {
+      const hit = damageBoss(state, boss, spinDmg, {
+        armorBreak: false,
+        freezeTicks: 1,
+        onBossDefeated: hooks?.onBossDefeated,
+      });
+      if (hit) connected = true;
+    }
+
+    if (connected) {
+      p.invulnTimer = Math.max(p.invulnTimer, 6);
+      state.events.push({
+        type: 'particle',
+        kind: 'spark',
+        x: p.x + p.w * 0.5,
+        y: p.y + p.h * 0.5,
+        color: '#c026d3',
+        count: 6,
+      });
+    } else if (state.tick % 6 === 0) {
+      state.events.push({
+        type: 'particle',
+        kind: 'spark',
+        x: p.x + p.w * 0.5,
+        y: p.y + p.h * 0.5,
+        color: '#60a5fa',
+        count: 2,
+      });
+    }
+  }
+
   // ---------------- SPEED BASHER CHIP (ID 14) ----------------
   if (
     !inHurtKnockback &&
     hasChip(state, 14) &&
-    Math.abs(p.vx) >= PLAYER_PHYSICS.SPRINT_MAX_SPEED - 0.15
+    (Math.abs(p.vx) >= PLAYER_PHYSICS.SPRINT_MAX_SPEED - 0.15 || p.sliding)
   ) {
+    let bashed = false;
     for (let i = 0; i < state.enemies.length; i++) {
       const e = state.enemies[i];
       if (e.dead || e.grabbed || e.hurtFlash > 0) {
         continue;
       }
       if (aabbOverlap(p, e)) {
-        damageEnemy(state, e, PLAYER_PHYSICS.SPEED_BASHER_DAMAGE, {
+        const hit = damageEnemy(state, e, PLAYER_PHYSICS.SPEED_BASHER_DAMAGE, {
           armorBreak: false,
           knockbackX: 3.5,
           knockbackY: -2.0,
@@ -583,7 +832,23 @@ export function updatePhysics(
           freezeTicks: 2,
           onEnemyDefeated: hooks?.onEnemyDefeated,
         });
+        if (hit) bashed = true;
       }
+    }
+
+    const boss = state.boss;
+    if (boss && boss.active && !boss.defeated && boss.invulnTimer === 0 && aabbOverlap(p, boss)) {
+      const hit = damageBoss(state, boss, PLAYER_PHYSICS.SPEED_BASHER_DAMAGE, {
+        armorBreak: false,
+        freezeTicks: 2,
+        onBossDefeated: hooks?.onBossDefeated,
+      });
+      if (hit) bashed = true;
+    }
+
+    if (bashed) {
+      // Brief ram protection avoids trading contact damage on the bash tick
+      p.invulnTimer = Math.max(p.invulnTimer, 6);
     }
   }
 
@@ -617,7 +882,9 @@ export function updateScarf(state: SimState): void {
   p.scarf[0].x = neckX;
   p.scarf[0].y = neckY;
 
-  const trailWindX = -p.facing * (0.8 + Math.min(2.2, Math.abs(p.vx) * 0.35)) + state.windForce * 0.6;
+  const effWind = state.progression.modifiers.mirrorWorld ? -state.windForce : state.windForce;
+  const trailWindX =
+    -p.facing * (0.8 + Math.min(2.2, Math.abs(p.vx) * 0.35)) + effWind * 0.6;
 
   for (let i = 1; i < count; i++) {
     const prev = p.scarf[i - 1];
