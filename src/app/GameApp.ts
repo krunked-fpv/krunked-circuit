@@ -463,11 +463,17 @@ export class GameApp {
   }
 
   private async setAssetMode(mode: AssetMode, silent = false): Promise<void> {
+    const customSpriteKeys = ['player_hero', 'hook_tip', 'boss_prism', 'boss_siege_tread'] as const;
+
     if (mode === 'CUSTOM_PACK' && !this.assets.isCustomPackAvailable()) {
       if (!silent) {
         this.menus.showToast('NO LOCAL CUSTOM PACK FOUND — USE LOAD PACK FOLDER', 'warn');
       }
       this.renderSettings.assetMode = 'BUILTIN';
+      for (const key of customSpriteKeys) {
+        this.renderer.setCustomSpriteOverride(key, null);
+      }
+      this.syncMenusNow();
       return;
     }
 
@@ -475,17 +481,19 @@ export class GameApp {
     this.renderSettings.assetMode = this.assets.getMode();
 
     if (this.renderSettings.assetMode === 'CUSTOM_PACK') {
-      await this.assets.preloadCustomImages([
-        'player_hero',
-        'hook_tip',
-        'boss_prism',
-        'boss_siege_tread',
-      ]);
-      for (const key of ['player_hero', 'hook_tip', 'boss_prism', 'boss_siege_tread']) {
+      await this.assets.preloadCustomImages([...customSpriteKeys]);
+      for (const key of customSpriteKeys) {
         const img = this.assets.getCustomImage(key);
-        if (img) {
+        // Only apply direct single-frame overrides (never squish a packed multi-frame sheet into 32x32)
+        if (img && img.naturalWidth > 0 && img.naturalWidth <= 96 && img.naturalHeight <= 96) {
           this.renderer.setCustomSpriteOverride(key, img);
+        } else {
+          this.renderer.setCustomSpriteOverride(key, null);
         }
+      }
+    } else {
+      for (const key of customSpriteKeys) {
+        this.renderer.setCustomSpriteOverride(key, null);
       }
     }
 
@@ -498,15 +506,23 @@ export class GameApp {
       );
     }
     this.persistSave();
+    this.syncMenusNow();
   }
 
   public startStage(stageId: StageId, remix = false): void {
+    if (stageId === 'boss_rush') {
+      this.state.progression.mode = 'boss_rush';
+      this.renderSettings.showSpeedrunTimer = true;
+    } else if (this.state.progression.mode === 'boss_rush') {
+      this.state.progression.mode = 'standard';
+    }
     loadFullStage(this.state, stageId, remix);
     this.state.screen = 'playing';
     this.state.activeHubTerminal = null;
     this.prevSnapshot = captureRenderSnapshot(this.state);
     this.drainEvents();
     this.persistSave();
+    this.syncMenusNow();
   }
 
   private retryFromCheckpoint(): void {
