@@ -23,6 +23,8 @@ const PICKUP_SIZE = 12;
 const MAGNET_RADIUS = 96;
 const TERMINAL_INTERACT_DX = 24;
 const TERMINAL_INTERACT_DY = 32;
+const PROXIMITY_RADIUS_SQ = 72 * 72;
+const PULSE_BOUNCE_VY = -7.2;
 
 function nextRng(state: SimState): number {
   state.rngState = (state.rngState + 0x6d2b79f5) | 0;
@@ -38,6 +40,11 @@ function getTile(state: SimState, tx: number, ty: number): number {
   return state.tiles[ty * state.tilesW + tx] ?? TileType.EMPTY;
 }
 
+function setTile(state: SimState, tx: number, ty: number, tile: TileType): void {
+  if (tx < 0 || ty < 0 || tx >= state.tilesW || ty >= state.tilesH) return;
+  state.tiles[ty * state.tilesW + tx] = tile;
+}
+
 function isSolid(state: SimState, tile: number): boolean {
   switch (tile) {
     case TileType.SOLID:
@@ -48,6 +55,7 @@ function isSolid(state: SimState, tile: number): boolean {
     case TileType.ELECTRIC_RAIL:
     case TileType.LASER_MIRROR:
     case TileType.CRUSHER:
+    case TileType.BOUNCE_PAD:
       return true;
     case TileType.TOGGLE_A:
       return !state.togglePhase;
@@ -78,6 +86,26 @@ function isPermanentCollectible(kind: PickupEntity['kind']): boolean {
     kind === 'burst_booster' ||
     kind === 'palette_chip'
   );
+}
+
+function getCameraTileBounds(state: SimState): {
+  minTx: number;
+  maxTx: number;
+  minTy: number;
+  maxTy: number;
+} {
+  return {
+    minTx: Math.max(0, Math.floor((state.camera.x - 32) / TILE)),
+    maxTx: Math.min(
+      state.tilesW - 1,
+      Math.ceil((state.camera.x + ENGINE_CONSTANTS.GAME_WIDTH + 32) / TILE),
+    ),
+    minTy: Math.max(0, Math.floor((state.camera.y - 32) / TILE)),
+    maxTy: Math.min(
+      state.tilesH - 1,
+      Math.ceil((state.camera.y + ENGINE_CONSTANTS.GAME_HEIGHT + 32) / TILE),
+    ),
+  };
 }
 
 export function getHubZoneStem(playerCenterX: number): 'command' | 'medbay' | 'dojo' {
@@ -235,8 +263,9 @@ function updatePickups(state: SimState): void {
         }
 
         case 'rescue': {
-          const idx = pk.rescueIndex ?? 0;
-          const rescueKey = `${state.stageId}:rescue_${idx}`;
+          const idx = pk.rescueIndex ?? 1;
+          const displayNum = idx >= 1 ? idx : idx + 1;
+          const rescueKey = pk.spawnId ?? `${state.stageId}_rescue_${displayNum}`;
           state.stageStats.rescuesCollected += 1;
           if (!state.progression.rescuedIds.includes(rescueKey)) {
             state.progression.rescuedIds.push(rescueKey);
@@ -245,9 +274,9 @@ function updatePickups(state: SimState): void {
           }
           state.events.push(
             { type: 'sfx', key: 'rescue' },
-            { type: 'rescue', index: idx, total: state.progression.totalRescues },
+            { type: 'rescue', index: displayNum, total: state.progression.totalRescues },
             { type: 'particle', kind: 'heal', x: cx, y: cy, color: '#66fff2', count: 10 },
-            { type: 'toast', text: `RESCUED UNIT #${idx + 1}! (+1 TOKEN)`, tone: 'unlock' },
+            { type: 'toast', text: `RESCUED UNIT #${displayNum}! (+1 TOKEN)`, tone: 'unlock' },
           );
           break;
         }
@@ -340,7 +369,6 @@ function updateProps(state: SimState): void {
       if (prop.hp <= 0) {
         prop.hp = 1;
         state.togglePhase = !state.togglePhase;
-        prop.activated = state.togglePhase;
         state.events.push(
           { type: 'sfx', key: 'switch' },
           {
@@ -352,6 +380,18 @@ function updateProps(state: SimState): void {
             count: 8,
           },
         );
+      }
+      prop.activated = state.togglePhase;
+      continue;
+    }
+
+    if (prop.kind === 'walker') {
+      // Keep parked Exo-Walker settled cleanly on floor
+      const footTx = Math.floor((prop.x + prop.w * 0.5) / TILE);
+      const footTy = Math.floor((prop.y + prop.h + 1) / TILE);
+      const below = getTile(state, footTx, footTy);
+      if (!isSolid(state, below) && below !== TileType.ONE_WAY) {
+        prop.y += 2;
       }
       continue;
     }
@@ -415,6 +455,9 @@ function updateProps(state: SimState): void {
   }
 }
 
+// ============================================================================
+// Biome Gimmick 1: solar_lasers — Periodic Laser Mirror Beams
+// ============================================================================
 function updateLaserMirrors(state: SimState, cb: WorldSimCallbacks): void {
   // Periodic 150-tick pulse: 0..89 idle, 90..119 telegraph, 120..149 active beam
   const cycleTick = state.tick % 150;
@@ -422,16 +465,12 @@ function updateLaserMirrors(state: SimState, cb: WorldSimCallbacks): void {
 
   const isTelegraph = cycleTick < 120;
   const player = state.player;
-  const camMinTx = Math.max(0, Math.floor((state.camera.x - 32) / TILE));
-  const camMaxTx = Math.min(state.tilesW - 1, Math.ceil((state.camera.x + ENGINE_CONSTANTS.GAME_WIDTH + 32) / TILE));
-  const camMinTy = Math.max(0, Math.floor((state.camera.y - 32) / TILE));
-  const camMaxTy = Math.min(state.tilesH - 1, Math.ceil((state.camera.y + ENGINE_CONSTANTS.GAME_HEIGHT + 32) / TILE));
-
+  const { minTx, maxTx, minTy, maxTy } = getCameraTileBounds(state);
   const table = DAMAGE_TABLES[state.progression.difficulty];
   const beamDmg = state.progression.modifiers.doubleHazards ? table.hazard * 2 : table.hazard;
 
-  for (let ty = camMinTy; ty <= camMaxTy; ty++) {
-    for (let tx = camMinTx; tx <= camMaxTx; tx++) {
+  for (let ty = minTy; ty <= maxTy; ty++) {
+    for (let tx = minTx; tx <= maxTx; tx++) {
       if (getTile(state, tx, ty) !== TileType.LASER_MIRROR) continue;
 
       const beamX = tx * TILE + 4;
@@ -485,19 +524,568 @@ function updateLaserMirrors(state: SimState, cb: WorldSimCallbacks): void {
   }
 }
 
+// ============================================================================
+// Biome Gimmick 2: scrap_crushers — Periodic Crushing Press Hazard Timing
+// ============================================================================
+function updateScrapCrushers(state: SimState, cb: WorldSimCallbacks): void {
+  // Deterministic 120-tick press cycle:
+  // 0..59 retracted (safe), 60..83 warning rumble, 84..103 slammed active, 104..119 retracting
+  const cycle = state.tick % 120;
+  if (cycle < 60 || cycle >= 104) return;
+
+  const isTelegraph = cycle < 84;
+  const player = state.player;
+  const { minTx, maxTx, minTy, maxTy } = getCameraTileBounds(state);
+  const table = DAMAGE_TABLES[state.progression.difficulty];
+  const crusherDmg = state.progression.modifiers.doubleHazards
+    ? table.hazard * 2
+    : Math.max(3, table.heavyContact);
+
+  let slammedSoundPlayed = false;
+
+  for (let ty = minTy; ty <= maxTy; ty++) {
+    for (let tx = minTx; tx <= maxTx; tx++) {
+      if (getTile(state, tx, ty) !== TileType.CRUSHER) continue;
+
+      const crushX = tx * TILE + 2;
+      const crushW = TILE - 4;
+      const crushTop = (ty + 1) * TILE;
+
+      if (isTelegraph) {
+        if (cycle % 8 === 0) {
+          state.events.push({
+            type: 'particle',
+            kind: 'spark',
+            x: tx * TILE + 8,
+            y: crushTop + 2,
+            color: '#ffd166',
+            count: 2,
+          });
+        }
+        continue;
+      }
+
+      // Compute crush column down to first solid floor (max 5 tiles = 80 px)
+      let endTy = ty + 1;
+      const maxEnd = Math.min(state.tilesH, ty + 6);
+      while (endTy < maxEnd && !isSolid(state, getTile(state, tx, endTy))) {
+        endTy++;
+      }
+      const crushH = Math.max(TILE, (endTy - (ty + 1)) * TILE);
+
+      if (cycle === 84) {
+        if (!slammedSoundPlayed) {
+          slammedSoundPlayed = true;
+          state.events.push(
+            { type: 'sfx', key: 'heavy_hit', gain: 0.55 },
+            { type: 'shake', ticks: 5, intensity: 1.5 },
+          );
+        }
+        state.events.push({
+          type: 'particle',
+          kind: 'dust',
+          x: tx * TILE + 8,
+          y: crushTop + crushH - 2,
+          color: '#f97316',
+          count: 3,
+        });
+      }
+
+      if (
+        player.invulnTimer <= 0 &&
+        player.action !== 'dead' &&
+        player.action !== 'warp' &&
+        aabbOverlap(player.x, player.y, player.w, player.h, crushX, crushTop, crushW, crushH)
+      ) {
+        cb.damagePlayer(state, crusherDmg, tx * TILE + 8);
+      }
+    }
+  }
+}
+
+// ============================================================================
+// Biome Gimmick 3: cryo_wind — Periodic Icy Blizzard Gusts
+// ============================================================================
+function updateCryoWind(state: SimState): void {
+  if (state.biomeGimmick !== 'cryo_wind') return;
+
+  // 240-tick deterministic gust cycle:
+  // 0..119 calm breeze (-0.06), 120..149 rising gust, 150..219 strong gust (-0.26), 220..239 calming
+  const cycle = state.tick % 240;
+  let targetWind = -0.06;
+  let gustStrength = 0;
+
+  if (cycle >= 120 && cycle < 150) {
+    const t = (cycle - 120) / 30;
+    targetWind = -0.06 - t * 0.2;
+    gustStrength = t * 0.4;
+  } else if (cycle >= 150 && cycle < 220) {
+    targetWind = -0.26;
+    gustStrength = 1.0;
+  } else if (cycle >= 220) {
+    const t = (240 - cycle) / 20;
+    targetWind = -0.06 - t * 0.2;
+    gustStrength = t * 0.4;
+  }
+
+  state.windForce = targetWind;
+
+  // Smoothly nudge airborne / unanchored Volt during icy gusts
+  const p = state.player;
+  if (
+    gustStrength > 0 &&
+    p.action !== 'dead' &&
+    p.action !== 'warp' &&
+    !p.grounded &&
+    p.onWall === 0 &&
+    p.onLedge === 0 &&
+    p.hook.phase === 'idle'
+  ) {
+    const armor = state.progression.loadouts[state.progression.activeLoadoutIndex].armorPaint;
+    const armorScale = armor === 3 ? 0.5 : 1.0; // Cryo Edge steadies Volt in blizzards
+    p.vx = Math.max(-4.5, p.vx - 0.055 * gustStrength * armorScale);
+  }
+
+  // Deterministic frost-gust streak particles across viewport
+  if (gustStrength > 0.25 && state.tick % 8 === 0) {
+    const bandY = state.camera.y + 24 + ((state.tick * 37) % (ENGINE_CONSTANTS.GAME_HEIGHT - 48));
+    state.events.push({
+      type: 'particle',
+      kind: 'spark',
+      x: state.camera.x + ENGINE_CONSTANTS.GAME_WIDTH - 8,
+      y: bandY,
+      vx: -4.2,
+      vy: 0.4,
+      color: '#d8f3ff',
+      count: 2,
+    });
+  }
+}
+
+// ============================================================================
+// Biome Gimmick 4: surge_rails — Periodic Electric Rail Pulses
+// ============================================================================
+function updateSurgeRails(state: SimState, cb: WorldSimCallbacks): void {
+  // Deterministic 120-tick high-voltage cycle:
+  // 0..59 idle, 60..83 telegraph crackle, 84..113 active surge pulse, 114..119 cooldown
+  const cycle = state.tick % 120;
+  if (cycle < 60 || cycle >= 114) return;
+
+  const isTelegraph = cycle < 84;
+  const player = state.player;
+  const { minTx, maxTx, minTy, maxTy } = getCameraTileBounds(state);
+  const table = DAMAGE_TABLES[state.progression.difficulty];
+  const hasSurgeProtector = hasEquippedChip(state.progression, 5);
+  const basePulseDmg = Math.max(2, Math.floor(table.hazard * 0.6));
+  const rawDmg = state.progression.modifiers.doubleHazards ? basePulseDmg * 2 : basePulseDmg;
+  let crackleEmitted = false;
+
+  for (let ty = minTy; ty <= maxTy; ty++) {
+    for (let tx = minTx; tx <= maxTx; tx++) {
+      if (getTile(state, tx, ty) !== TileType.ELECTRIC_RAIL) continue;
+
+      if (isTelegraph) {
+        if ((cycle + tx) % 10 === 0) {
+          state.events.push({
+            type: 'particle',
+            kind: 'spark',
+            x: tx * TILE + 8,
+            y: ty * TILE + 8,
+            color: '#facc15',
+            count: 2,
+          });
+        }
+        continue;
+      }
+
+      if (cycle === 84 && !crackleEmitted) {
+        crackleEmitted = true;
+        state.events.push({ type: 'sfx', key: 'switch', gain: 0.4, pitchJitter: 0.15 });
+      }
+      if ((cycle + tx * 3) % 8 === 0) {
+        state.events.push({
+          type: 'particle',
+          kind: 'spark',
+          x: tx * TILE + 8,
+          y: ty * TILE + 8,
+          color: '#5ce1ff',
+          count: 2,
+        });
+      }
+
+      // Active pulse zone extends slightly above rail floor and downward from ceiling coils
+      const zoneX = tx * TILE - 2;
+      const zoneY = ty * TILE - 8;
+      const zoneW = TILE + 4;
+      const zoneH = TILE + 24;
+
+      if (
+        player.invulnTimer <= 0 &&
+        player.action !== 'dead' &&
+        player.action !== 'warp' &&
+        aabbOverlap(player.x, player.y, player.w, player.h, zoneX, zoneY, zoneW, zoneH)
+      ) {
+        if (hasSurgeProtector && !state.progression.modifiers.doubleHazards) {
+          // Surge Protector insulates Volt from ambient rail discharge pulses!
+          if (cycle % 10 === 0) {
+            state.events.push({
+              type: 'particle',
+              kind: 'spark',
+              x: player.x + player.w * 0.5,
+              y: player.y + player.h * 0.5,
+              color: '#38f2ff',
+              count: 3,
+            });
+          }
+          continue;
+        }
+        const appliedDmg = hasSurgeProtector ? Math.max(1, Math.floor(rawDmg * 0.5)) : rawDmg;
+        cb.damagePlayer(state, appliedDmg, tx * TILE + 8);
+      }
+    }
+  }
+}
+
+// ============================================================================
+// Biome Gimmick 5: skyway_convoy — High-Speed Wind Drift on Open Freighter Decks
+// ============================================================================
+function updateSkywayConvoy(state: SimState): void {
+  if (state.biomeGimmick !== 'skyway_convoy') return;
+
+  const p = state.player;
+  const pTx = Math.floor((p.x + p.w * 0.5) / TILE);
+  const headTy = Math.floor(p.y / TILE);
+
+  // Detect whether Volt is sheltered under a cargo hull roof or deck ceiling (rows 1..headTy-1)
+  let sheltered = false;
+  for (let ty = headTy - 1; ty >= 1; ty--) {
+    if (isSolid(state, getTile(state, pTx, ty))) {
+      sheltered = true;
+      break;
+    }
+  }
+
+  if (sheltered) {
+    state.windForce = -0.04;
+    return;
+  }
+
+  // Open freighter deck: steady high-speed slipstream + rhythmic jet wash
+  const jetOsc = Math.sin(state.tick * 0.035) * 0.06;
+  state.windForce = -0.22 + jetOsc;
+
+  if (
+    p.action !== 'dead' &&
+    p.action !== 'warp' &&
+    !p.grounded &&
+    p.onWall === 0 &&
+    p.onLedge === 0 &&
+    p.hook.phase === 'idle'
+  ) {
+    p.vx = Math.max(-4.8, p.vx - 0.045);
+  }
+
+  if (state.tick % 9 === 0) {
+    const streakY = state.camera.y + 18 + ((state.tick * 43) % (ENGINE_CONSTANTS.GAME_HEIGHT - 36));
+    state.events.push({
+      type: 'particle',
+      kind: 'dust',
+      x: state.camera.x + ENGINE_CONSTANTS.GAME_WIDTH - 4,
+      y: streakY,
+      vx: -5.4,
+      vy: 0,
+      color: '#fda4af',
+      count: 2,
+    });
+  }
+}
+
+// ============================================================================
+// Biome Gimmick 6: pulse_rhythm — 120 BPM Beat Toggle & High-Spring BOUNCE_PAD
+// ============================================================================
+function updatePulseRhythmAndBouncePads(state: SimState, input?: InputFrame): void {
+  // 120 BPM = 30 ticks/beat; toggle TOGGLE_A/B cleanly every 4-beat bar (120 ticks)
+  state.rhythmBeat = Math.floor(state.tick / 30) % 4;
+  if (state.biomeGimmick === 'pulse_rhythm' && state.tick > 0) {
+    const barTick = state.tick % 120;
+    if (barTick === 0) {
+      state.togglePhase = !state.togglePhase;
+      state.events.push({ type: 'sfx', key: 'switch', gain: 0.35 });
+    } else if (barTick === 90) {
+      // Beat 3 telegraph shimmer near player
+      state.events.push({
+        type: 'particle',
+        kind: 'spark',
+        x: state.player.x + state.player.w * 0.5,
+        y: state.player.y - 6,
+        color: state.togglePhase ? '#ff4d6d' : '#4ee7ff',
+        count: 2,
+      });
+    }
+  }
+
+  // BOUNCE_PAD high-spring launch (vy = -7.2, or -8.0 when holding jump!)
+  const p = state.player;
+  if (p.action === 'dead' || p.action === 'warp') return;
+
+  const footY = p.y + p.h;
+  const footTy = Math.floor((footY + 1) / TILE);
+  const tileTop = footTy * TILE;
+  if (Math.abs(footY - tileTop) > 3) return;
+
+  const leftTx = Math.floor((p.x + 1) / TILE);
+  const rightTx = Math.floor((p.x + p.w - 1) / TILE);
+  let onBounce = false;
+  for (let tx = leftTx; tx <= rightTx; tx++) {
+    if (getTile(state, tx, footTy) === TileType.BOUNCE_PAD) {
+      onBounce = true;
+      break;
+    }
+  }
+
+  if (onBounce && p.vy > PULSE_BOUNCE_VY) {
+    const targetVy = input?.jump ? Math.min(p.vy, -8.0) : PULSE_BOUNCE_VY;
+    const wasIdle = p.vy >= 0;
+    p.vy = targetVy;
+    p.grounded = false;
+    p.airJumpsUsed = 0;
+    p.leftGroundTick = -999;
+    if (wasIdle) {
+      state.events.push(
+        { type: 'sfx', key: 'bounce', pitchJitter: 0.08 },
+        {
+          type: 'particle',
+          kind: 'shockring',
+          x: p.x + p.w * 0.5,
+          y: p.y + p.h,
+          color: '#4dffb5',
+          count: 8,
+        },
+      );
+    }
+  }
+}
+
+// ============================================================================
+// Biome Gimmick 7: quarry_walker — Power Exo-Walker Mount, Stomp & Dismount
+// ============================================================================
+function emitWalkerStompShockwave(state: SimState): void {
+  const p = state.player;
+  const cx = p.x + p.w * 0.5;
+  const footY = p.y + p.h;
+
+  // Spawn twin floor shockwaves left and right
+  for (const dir of [-1, 1] as const) {
+    state.projectiles.push({
+      id: state.nextEntityId++,
+      owner: 'player',
+      kind: 'shockwave',
+      x: cx - 7 + dir * 10,
+      y: footY - 14,
+      vx: dir * 4.4,
+      vy: 0,
+      w: 14,
+      h: 14,
+      damage: 3,
+      ttl: 34,
+      pierce: true,
+      bouncesLeft: 0,
+      color: '#f97316',
+      hitIds: [],
+    });
+  }
+
+  // Shatter adjacent/underlying BREAKABLE basalt tiles
+  const minTx = Math.floor((p.x - 16) / TILE);
+  const maxTx = Math.floor((p.x + p.w + 16) / TILE);
+  const minTy = Math.floor(p.y / TILE);
+  const maxTy = Math.floor((footY + 4) / TILE);
+  for (let ty = minTy; ty <= maxTy; ty++) {
+    for (let tx = minTx; tx <= maxTx; tx++) {
+      if (getTile(state, tx, ty) === TileType.BREAKABLE) {
+        setTile(state, tx, ty, TileType.EMPTY);
+        state.events.push(
+          { type: 'sfx', key: 'breakable' },
+          {
+            type: 'particle',
+            kind: 'shard',
+            x: tx * TILE + 8,
+            y: ty * TILE + 8,
+            color: '#c7b0aa',
+            count: 6,
+          },
+        );
+      }
+    }
+  }
+
+  state.camera.shakeTimer = Math.max(state.camera.shakeTimer, 7);
+  state.camera.shakeIntensity = Math.max(state.camera.shakeIntensity, 2.5);
+  state.events.push(
+    { type: 'sfx', key: 'heavy_hit', gain: 0.9 },
+    { type: 'shake', ticks: 7, intensity: 2.5 },
+    { type: 'particle', kind: 'shockring', x: cx, y: footY, color: '#f97316', count: 10 },
+  );
+}
+
+function updateQuarryWalker(state: SimState, input?: InputFrame): void {
+  const p = state.player;
+  if (p.action === 'dead' || p.action === 'warp') return;
+
+  // Active piloting state
+  if (p.inWalker) {
+    if (p.walkerHp <= 0) {
+      p.inWalker = false;
+      // Remove destroyed walker prop
+      for (let i = state.props.length - 1; i >= 0; i--) {
+        if (state.props[i].kind === 'walker' && state.props[i].grabbed) {
+          state.props.splice(i, 1);
+          break;
+        }
+      }
+      return;
+    }
+
+    // Down + Jump dismounts Volt safely upward and parks the Exo-Walker in place!
+    if (input && input.moveY === 1 && input.jumpPressed) {
+      p.inWalker = false;
+      p.vy = -5.5;
+      p.grounded = false;
+      p.invulnTimer = Math.max(p.invulnTimer, 20);
+      p.jumpBufferTick = -999;
+
+      for (let i = 0; i < state.props.length; i++) {
+        const prop = state.props[i];
+        if (prop.kind === 'walker' && prop.grabbed) {
+          prop.grabbed = false;
+          prop.activated = false;
+          prop.x = p.x + p.w * 0.5 - prop.w * 0.5;
+          prop.y = p.y + p.h - prop.h;
+          prop.hp = Math.max(1, p.walkerHp);
+          break;
+        }
+      }
+
+      state.events.push(
+        { type: 'sfx', key: 'jump' },
+        {
+          type: 'particle',
+          kind: 'dust',
+          x: p.x + p.w * 0.5,
+          y: p.y + p.h,
+          color: '#cbd5e1',
+          count: 8,
+        },
+        { type: 'toast', text: 'EXO-WALKER DISMOUNTED', tone: 'info' },
+      );
+      return;
+    }
+
+    // Stomp shockwave on hard landing (detected via physics land SFX) or grounded attack slam
+    let landedThisTick = false;
+    for (let i = 0; i < state.events.length; i++) {
+      const ev = state.events[i];
+      if (ev.type === 'sfx' && ev.key === 'land') {
+        landedThisTick = true;
+        break;
+      }
+    }
+
+    if (landedThisTick || (p.grounded && Boolean(input?.attackPressed))) {
+      emitWalkerStompShockwave(state);
+    }
+    return;
+  }
+
+  // Not in walker: check interaction with parked walker props to mount!
+  if (!input || input.moveY === 1) return;
+  const wantsInteract = input.acceptPressed || input.moveY === -1;
+  if (!wantsInteract) return;
+
+  for (let i = 0; i < state.props.length; i++) {
+    const prop = state.props[i];
+    if (prop.kind !== 'walker' || prop.grabbed || prop.hp <= 0) continue;
+    if (
+      aabbOverlap(
+        p.x,
+        p.y,
+        p.w,
+        p.h,
+        prop.x - 4,
+        prop.y - 4,
+        prop.w + 8,
+        prop.h + 8,
+      )
+    ) {
+      p.inWalker = true;
+      p.walkerHp = prop.hp > 0 ? prop.hp : 12;
+      p.y = prop.y + prop.h - p.h;
+      p.vy = 0;
+      p.grounded = true;
+      p.jumpBufferTick = -999;
+      prop.grabbed = true;
+      prop.activated = true;
+      state.events.push(
+        { type: 'sfx', key: 'checkpoint' },
+        {
+          type: 'particle',
+          kind: 'shockring',
+          x: p.x + p.w * 0.5,
+          y: p.y + p.h * 0.5,
+          color: '#f97316',
+          count: 10,
+        },
+        { type: 'toast', text: 'POWER EXO-WALKER MOUNTED! (DOWN+JUMP TO DISMOUNT)', tone: 'info' },
+      );
+      return;
+    }
+  }
+}
+
+// ============================================================================
+// Biome Gimmick 8: neon_matrix — Proximity Detection & Switch-Toggled Cyber Blocks
+// ============================================================================
+function updateNeonMatrix(state: SimState): void {
+  const p = state.player;
+  const pCx = p.x + p.w * 0.5;
+  const pCy = p.y + p.h * 0.5;
+  const { minTx, maxTx, minTy, maxTy } = getCameraTileBounds(state);
+  let sparkBudget = 2;
+
+  for (let ty = minTy; ty <= maxTy && sparkBudget > 0; ty++) {
+    for (let tx = minTx; tx <= maxTx && sparkBudget > 0; tx++) {
+      if (getTile(state, tx, ty) !== TileType.PROXIMITY_SOLID) continue;
+
+      const tileCx = (tx + 0.5) * TILE;
+      const tileCy = (ty + 0.5) * TILE;
+      const dx = tileCx - pCx;
+      const dy = tileCy - pCy;
+      if (dx * dx + dy * dy <= PROXIMITY_RADIUS_SQ) {
+        if ((state.tick + tx * 7 + ty * 13) % 24 === 0) {
+          sparkBudget -= 1;
+          state.events.push({
+            type: 'particle',
+            kind: 'spark',
+            x: tileCx,
+            y: tileCy,
+            color: '#86efac',
+            count: 2,
+          });
+        }
+      }
+    }
+  }
+}
+
 export function updateWorld(
   state: SimState,
   cb: WorldSimCallbacks,
   input?: InputFrame,
 ): void {
-  // 1. Rhythm beat counter (120 BPM = 30 ticks/beat)
-  const prevBeat = state.rhythmBeat;
-  state.rhythmBeat = Math.floor(state.tick / 30) % 4;
-  if (state.biomeGimmick === 'pulse_rhythm' && state.rhythmBeat !== prevBeat && state.rhythmBeat === 0) {
-    state.togglePhase = !state.togglePhase;
-  }
+  // 1. Pulse Rhythm 120 BPM toggle & High-Spring BOUNCE_PAD launch
+  updatePulseRhythmAndBouncePads(state, input);
 
-  // 2. Hub 3-stem BGM switching by player X zone (deterministic, zero external state)
+  // 2. Hub 3-stem BGM switching & terminal interaction (deterministic, zero external state)
   if (state.stageId === 'hub') {
     const curCx = state.player.x + state.player.w * 0.5;
     const prevCx = curCx - state.player.vx;
@@ -514,11 +1102,17 @@ export function updateWorld(
   // 3. Pickups (gravity, Magnet Chassis, collection, Repair Enhancer, Overflow Converter)
   updatePickups(state);
 
-  // 4. Props (checkpoints, switches, breakable crates/barrels)
+  // 4. Props (checkpoints, switches, breakable crates/barrels, parked walkers)
   updateProps(state);
 
-  // 5. Laser Mirror pulsing hazards
+  // 5. All Biome Gimmicks (100% deterministic, pure simulation)
   updateLaserMirrors(state, cb);
+  updateScrapCrushers(state, cb);
+  updateCryoWind(state);
+  updateSurgeRails(state, cb);
+  updateSkywayConvoy(state);
+  updateQuarryWalker(state, input);
+  updateNeonMatrix(state);
 
   // 6. Goal Door tile check & Stage Clear timer
   if (state.stageClearTimer > 0) {
