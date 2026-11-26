@@ -901,7 +901,7 @@ function buildAimReticle(): PixelCanvas {
 }
 
 // ============================================================================
-// 3. 16x16 Biome Tilesets for All 15 StageIds & Every TileType
+// 3. 16x16 Bespoke Biome Tilesets for All 15 StageIds & Every TileType
 // ============================================================================
 
 interface BiomeTilePalette {
@@ -910,129 +910,129 @@ interface BiomeTilePalette {
   readonly light: RGBA;
   readonly accent: RGBA;
   readonly trim: RGBA;
-  readonly pattern: 'tech' | 'metro' | 'solar' | 'cryo' | 'industrial' | 'matrix' | 'citadel';
+  readonly glow: RGBA;
 }
 
 const BIOME_PALETTES: Record<StageId, BiomeTilePalette> = {
   hub: {
-    dark: parseHexColor('#1f3149'),
-    mid: parseHexColor('#3d5a80'),
-    light: parseHexColor('#7ca8d6'),
+    dark: parseHexColor('#1b2c4a'),
+    mid: parseHexColor('#3a5882'),
+    light: parseHexColor('#84b4e6'),
     accent: parseHexColor('#38f9ff'),
     trim: parseHexColor('#f59e0b'),
-    pattern: 'tech',
+    glow: parseHexColor('#bae6fd'),
   },
   tutorial: {
-    dark: parseHexColor('#1e293b'),
-    mid: parseHexColor('#475569'),
-    light: parseHexColor('#94a3b8'),
+    dark: parseHexColor('#162a3a'),
+    mid: parseHexColor('#385a70'),
+    light: parseHexColor('#86b8d4'),
     accent: parseHexColor('#34d399'),
-    trim: parseHexColor('#38bdf8'),
-    pattern: 'tech',
+    trim: parseHexColor('#38f9ff'),
+    glow: parseHexColor('#a7f3d0'),
   },
   opening: {
-    dark: parseHexColor('#262f42'),
-    mid: parseHexColor('#4f5d78'),
-    light: parseHexColor('#8b9bb8'),
+    dark: parseHexColor('#232a3b'),
+    mid: parseHexColor('#4c5973'),
+    light: parseHexColor('#8fa3c7'),
     accent: parseHexColor('#fb923c'),
     trim: parseHexColor('#facc15'),
-    pattern: 'metro',
+    glow: parseHexColor('#fed7aa'),
   },
   optic: {
-    dark: parseHexColor('#6b3b18'),
+    dark: parseHexColor('#633414'),
     mid: parseHexColor('#c47e35'),
-    light: parseHexColor('#f3bd68'),
+    light: parseHexColor('#f7c978'),
     accent: parseHexColor('#38f9ff'),
     trim: parseHexColor('#fde047'),
-    pattern: 'solar',
+    glow: parseHexColor('#fef9c3'),
   },
   patch: {
-    dark: parseHexColor('#47251a'),
-    mid: parseHexColor('#8c5239'),
-    light: parseHexColor('#c98863'),
-    accent: parseHexColor('#4ade80'),
-    trim: parseHexColor('#fbbf24'),
-    pattern: 'industrial',
-  },
-  cooler: {
-    dark: parseHexColor('#193d54'),
-    mid: parseHexColor('#3b82a6'),
-    light: parseHexColor('#93e2ff'),
-    accent: parseHexColor('#67e8f9'),
-    trim: parseHexColor('#e0f2fe'),
-    pattern: 'cryo',
-  },
-  elec: {
-    dark: parseHexColor('#332a12'),
-    mid: parseHexColor('#6b5b2a'),
-    light: parseHexColor('#d4b54a'),
-    accent: parseHexColor('#facc15'),
-    trim: parseHexColor('#38f9ff'),
-    pattern: 'industrial',
-  },
-  shift: {
-    dark: parseHexColor('#163e42'),
-    mid: parseHexColor('#2f7a78'),
-    light: parseHexColor('#76d1cb'),
-    accent: parseHexColor('#fb7185'),
-    trim: parseHexColor('#e2e8f0'),
-    pattern: 'metro',
-  },
-  wave: {
-    dark: parseHexColor('#331a59'),
-    mid: parseHexColor('#6d3ea8'),
-    light: parseHexColor('#b784f7'),
-    accent: parseHexColor('#f472b6'),
-    trim: parseHexColor('#38f9ff'),
-    pattern: 'matrix',
-  },
-  break: {
-    dark: parseHexColor('#3d2119'),
-    mid: parseHexColor('#7a4c3b'),
-    light: parseHexColor('#bd8268'),
+    dark: parseHexColor('#2b2f26'),
+    mid: parseHexColor('#5e664b'),
+    light: parseHexColor('#9fa87e'),
     accent: parseHexColor('#f97316'),
     trim: parseHexColor('#facc15'),
-    pattern: 'industrial',
+    glow: parseHexColor('#fdba74'),
+  },
+  cooler: {
+    dark: parseHexColor('#143a59'),
+    mid: parseHexColor('#388ac2'),
+    light: parseHexColor('#9ce8ff'),
+    accent: parseHexColor('#67e8f9'),
+    trim: parseHexColor('#e0f2fe'),
+    glow: parseHexColor('#ffffff'),
+  },
+  elec: {
+    dark: parseHexColor('#1a1b47'),
+    mid: parseHexColor('#36418f'),
+    light: parseHexColor('#7c8ff5'),
+    accent: parseHexColor('#facc15'),
+    trim: parseHexColor('#f59e0b'),
+    glow: parseHexColor('#38f9ff'),
+  },
+  shift: {
+    dark: parseHexColor('#173b42'),
+    mid: parseHexColor('#337c80'),
+    light: parseHexColor('#8ae0dc'),
+    accent: parseHexColor('#fb7185'),
+    trim: parseHexColor('#e2e8f0'),
+    glow: parseHexColor('#34d399'),
+  },
+  wave: {
+    dark: parseHexColor('#241047'),
+    mid: parseHexColor('#582896'),
+    light: parseHexColor('#ad72f5'),
+    accent: parseHexColor('#f472b6'),
+    trim: parseHexColor('#38f9ff'),
+    glow: parseHexColor('#fde047'),
+  },
+  break: {
+    dark: parseHexColor('#2c1d1a'),
+    mid: parseHexColor('#61443c'),
+    light: parseHexColor('#a87e70'),
+    accent: parseHexColor('#f97316'),
+    trim: parseHexColor('#eab308'),
+    glow: parseHexColor('#fde047'),
   },
   cipher: {
-    dark: parseHexColor('#121c30'),
-    mid: parseHexColor('#263b5e'),
-    light: parseHexColor('#4f7fc4'),
-    accent: parseHexColor('#22d3ee'),
-    trim: parseHexColor('#4ade80'),
-    pattern: 'matrix',
+    dark: parseHexColor('#140d29'),
+    mid: parseHexColor('#2c1e54'),
+    light: parseHexColor('#6f4ac7'),
+    accent: parseHexColor('#c084fc'),
+    trim: parseHexColor('#22d3ee'),
+    glow: parseHexColor('#4ade80'),
   },
   final_1: {
-    dark: parseHexColor('#291727'),
-    mid: parseHexColor('#54374f'),
-    light: parseHexColor('#966b8e'),
+    dark: parseHexColor('#261724'),
+    mid: parseHexColor('#544459'),
+    light: parseHexColor('#a393ab'),
     accent: parseHexColor('#f43f5e'),
     trim: parseHexColor('#fbbf24'),
-    pattern: 'citadel',
+    glow: parseHexColor('#fda4af'),
   },
   final_2: {
-    dark: parseHexColor('#19263a'),
-    mid: parseHexColor('#384f6e'),
-    light: parseHexColor('#7aa4d6'),
-    accent: parseHexColor('#fbbf24'),
+    dark: parseHexColor('#12203b'),
+    mid: parseHexColor('#2d4a7d'),
+    light: parseHexColor('#76a7e8'),
+    accent: parseHexColor('#fb923c'),
     trim: parseHexColor('#38f9ff'),
-    pattern: 'citadel',
+    glow: parseHexColor('#fef08a'),
   },
   final_3: {
-    dark: parseHexColor('#1d2436'),
-    mid: parseHexColor('#4c5c7a'),
-    light: parseHexColor('#b8cbe6'),
-    accent: parseHexColor('#a78bfa'),
-    trim: parseHexColor('#38f9ff'),
-    pattern: 'citadel',
+    dark: parseHexColor('#130c24'),
+    mid: parseHexColor('#2d1e4d'),
+    light: parseHexColor('#7863a8'),
+    accent: parseHexColor('#f59e0b'),
+    trim: parseHexColor('#fef08a'),
+    glow: parseHexColor('#c084fc'),
   },
   boss_rush: {
-    dark: parseHexColor('#332419'),
-    mid: parseHexColor('#6b4f3a'),
-    light: parseHexColor('#c49c78'),
-    accent: parseHexColor('#facc15'),
-    trim: parseHexColor('#f43f5e'),
-    pattern: 'citadel',
+    dark: parseHexColor('#2b1e16'),
+    mid: parseHexColor('#694b34'),
+    light: parseHexColor('#d4a772'),
+    accent: parseHexColor('#f43f5e'),
+    trim: parseHexColor('#facc15'),
+    glow: parseHexColor('#fef08a'),
   },
 };
 
@@ -1056,6 +1056,251 @@ export const SOLID_TILE_TYPES: readonly TileType[] = [
   TileType.PROXIMITY_SOLID,
 ] as const;
 
+function drawBespokeSolidTile(c: PixelCanvas, stageId: StageId, bp: BiomeTilePalette): void {
+  const white = parseHexColor('#f8fafc');
+  c.fillRect(0, 0, 16, 16, bp.mid);
+  c.strokeRect(0, 0, 16, 16, OUTLINE);
+  // Crisp 3-tone metallic/stone bevel frame
+  c.hline(1, 1, 14, bp.light);
+  c.hline(1, 2, 14, mixRgba(bp.light, bp.mid, 0.48));
+  c.vline(1, 1, 14, bp.light);
+  c.hline(1, 14, 14, bp.dark);
+  c.hline(2, 13, 12, bp.dark);
+  c.vline(14, 1, 14, bp.dark);
+
+  switch (stageId) {
+    case 'hub': {
+      // Command Deck naval cobalt steel plating with recessed cyan light bar & amber bridge LEDs
+      c.strokeRect(3, 3, 10, 9, bp.dark);
+      c.hline(4, 4, 8, bp.light);
+      c.fillRect(5, 6, 6, 2, bp.dark);
+      c.hline(5, 7, 6, bp.accent);
+      c.px(7, 7, white);
+      c.px(3, 12, bp.trim);
+      c.px(12, 12, bp.trim);
+      break;
+    }
+    case 'tutorial': {
+      // Holographic VR calibration grid block with corner registration ticks & emerald crosshair
+      c.strokeRect(2, 2, 12, 12, bp.dark);
+      c.hline(2, 8, 12, mixRgba(bp.dark, bp.accent, 0.35));
+      c.vline(8, 2, 12, mixRgba(bp.dark, bp.accent, 0.35));
+      c.fillRect(7, 7, 2, 2, bp.accent);
+      c.px(7, 7, white);
+      c.px(3, 3, bp.trim);
+      c.px(12, 3, bp.trim);
+      c.px(3, 12, bp.trim);
+      c.px(12, 12, bp.trim);
+      break;
+    }
+    case 'opening': {
+      // Metro Expressway riveted rail-car girder with heavy recess & amber transit lights
+      c.fillRect(3, 4, 10, 8, bp.dark);
+      c.strokeRect(3, 4, 10, 8, OUTLINE);
+      c.hline(4, 5, 8, bp.mid);
+      c.hline(4, 6, 8, bp.light);
+      c.px(2, 2, bp.trim);
+      c.px(13, 2, bp.trim);
+      c.fillRect(5, 8, 2, 2, bp.accent);
+      c.fillRect(9, 8, 2, 2, bp.accent);
+      c.px(5, 8, white);
+      c.px(9, 8, white);
+      break;
+    }
+    case 'optic': {
+      // Sun-baked sandstone masonry + photovoltaic gold-and-cyan mirror inlay
+      c.hline(1, 8, 14, bp.dark);
+      c.vline(8, 1, 7, bp.dark);
+      c.vline(4, 8, 6, bp.dark);
+      c.vline(11, 8, 6, bp.dark);
+      c.fillRect(10, 3, 3, 4, bp.dark);
+      c.fillRect(10, 4, 3, 2, bp.accent);
+      c.px(11, 4, white);
+      c.hline(2, 3, 5, bp.trim);
+      c.hline(5, 10, 5, bp.trim);
+      break;
+    }
+    case 'patch': {
+      // Riveted foundry steel & diagonal yellow/black hazard stripes along lower flange
+      c.hline(1, 9, 14, OUTLINE);
+      c.fillRect(2, 10, 12, 3, OUTLINE);
+      for (let x = 2; x < 14; x += 4) {
+        c.px(x, 10, bp.trim);
+        c.px(x + 1, 10, bp.trim);
+        c.px(x + 1, 11, bp.trim);
+        c.px(x + 2, 11, bp.trim);
+        c.px(x + 2, 12, bp.trim);
+        c.px(x + 3, 12, bp.trim);
+      }
+      // Corner iron rivets & central smelter seam
+      c.px(3, 3, bp.light);
+      c.px(12, 3, bp.light);
+      c.px(3, 7, bp.light);
+      c.px(12, 7, bp.light);
+      c.fillRect(6, 4, 4, 3, bp.dark);
+      c.hline(7, 5, 2, bp.accent);
+      break;
+    }
+    case 'cooler': {
+      // Faceted cryo ice block with polygonal diamond facets & sparkling specular streaks
+      c.fillRect(2, 2, 12, 12, mixRgba(bp.mid, bp.light, 0.3));
+      c.line(2, 11, 11, 2, white);
+      c.line(3, 12, 12, 3, bp.trim);
+      c.line(7, 13, 13, 7, white);
+      c.line(2, 6, 6, 2, bp.trim);
+      // Deep crystalline inner bevels
+      c.line(5, 13, 13, 5, bp.dark);
+      c.fillRect(3, 3, 2, 2, white);
+      c.px(10, 10, bp.accent);
+      break;
+    }
+    case 'elec': {
+      // High-voltage gold/blue conductor plate with twin golden bus-bars & cyan spark nodes
+      c.fillRect(2, 2, 12, 12, bp.dark);
+      c.fillRect(2, 4, 12, 3, bp.trim);
+      c.hline(2, 4, 12, bp.accent);
+      c.fillRect(2, 9, 12, 3, bp.trim);
+      c.hline(2, 9, 12, bp.accent);
+      // Central blue insulator bridge + electric cyan arc dots
+      c.fillRect(6, 3, 4, 10, bp.mid);
+      c.strokeRect(6, 3, 4, 10, OUTLINE);
+      c.px(7, 5, bp.glow);
+      c.px(8, 7, white);
+      c.px(7, 10, bp.glow);
+      break;
+    }
+    case 'shift': {
+      // Aerodynamic convoy hull panels with wind-swept diagonal chevrons & crimson nav lights
+      c.hline(2, 7, 12, bp.dark);
+      c.hline(2, 8, 12, bp.trim);
+      // Forward aero chevron grooves
+      c.line(4, 3, 7, 6, bp.light);
+      c.line(8, 3, 11, 6, bp.light);
+      c.line(4, 12, 7, 9, bp.dark);
+      c.line(8, 12, 11, 9, bp.dark);
+      // Twin aircraft running lights
+      c.fillRect(11, 4, 2, 2, bp.accent);
+      c.px(12, 4, white);
+      c.fillRect(3, 10, 2, 2, bp.glow);
+      break;
+    }
+    case 'wave': {
+      // Neon equalizer & acoustic speaker tile with 4-band lit synth bars
+      c.fillRect(2, 2, 12, 12, bp.dark);
+      c.strokeRect(2, 2, 12, 12, bp.mid);
+      // 4 neon equalizer bar columns
+      const heights = [4, 8, 6, 9];
+      for (let i = 0; i < 4; i++) {
+        const bx = 3 + i * 3;
+        const h = heights[i];
+        const col = i % 2 === 0 ? bp.accent : bp.trim;
+        c.fillRect(bx, 13 - h, 2, h, col);
+        c.hline(bx, 13 - h, 2, i === 3 ? bp.glow : white);
+      }
+      // Speaker grille corner studs
+      c.px(2, 2, bp.light);
+      c.px(13, 2, bp.light);
+      break;
+    }
+    case 'break': {
+      // Cracked volcanic basalt stone & bolted orange-steel mine struts
+      // Jagged basalt rock fissures
+      c.line(4, 2, 7, 6, OUTLINE);
+      c.line(7, 6, 5, 11, OUTLINE);
+      c.line(7, 6, 12, 8, OUTLINE);
+      c.line(8, 7, 11, 12, bp.dark);
+      // Highlighted mineral/magma ore veins beside fissure
+      c.px(6, 5, bp.accent);
+      c.px(8, 6, bp.glow);
+      c.px(10, 8, bp.accent);
+      // Heavy steel mine-strut I-beam corner brackets
+      c.fillRect(1, 1, 3, 14, bp.dark);
+      c.vline(2, 2, 12, bp.accent);
+      c.px(2, 3, bp.trim);
+      c.px(2, 12, bp.trim);
+      break;
+    }
+    case 'cipher': {
+      // Glowing violet matrix circuit block with orthogonal pathways & logic vias
+      c.fillRect(2, 2, 12, 12, bp.dark);
+      c.hline(2, 5, 6, bp.accent);
+      c.vline(7, 5, 5, bp.accent);
+      c.hline(7, 10, 6, bp.trim);
+      c.vline(4, 8, 5, bp.light);
+      c.hline(10, 3, 4, bp.trim);
+      c.vline(10, 3, 5, bp.trim);
+      // Glowing IC vias
+      c.fillRect(6, 4, 2, 2, white);
+      c.fillRect(12, 9, 2, 2, bp.glow);
+      c.px(4, 12, bp.accent);
+      c.px(13, 3, white);
+      break;
+    }
+    case 'final_1': {
+      // Fortress titanium armor with chamfered blast seams, hex bolts & crimson Legion emblem
+      c.strokeRect(3, 3, 10, 10, OUTLINE);
+      c.hline(4, 4, 8, bp.light);
+      c.vline(4, 4, 8, bp.light);
+      // Recessed crimson-gold Legion chevron
+      c.line(5, 6, 7, 9, bp.accent);
+      c.line(10, 6, 8, 9, bp.accent);
+      c.px(7, 8, bp.trim);
+      c.px(8, 8, bp.trim);
+      // Corner titanium hex bolts
+      c.px(2, 2, bp.trim);
+      c.px(13, 2, bp.trim);
+      c.px(2, 13, bp.trim);
+      c.px(13, 13, bp.trim);
+      break;
+    }
+    case 'final_2': {
+      // Glowing reactor core plating with cobalt containment ribs & molten fusion window
+      c.fillRect(4, 2, 8, 12, bp.dark);
+      c.fillRect(5, 3, 6, 10, bp.accent);
+      c.fillRect(6, 4, 4, 8, bp.glow);
+      c.vline(7, 4, 8, white);
+      // Containment rib bars crossing reactor window
+      c.hline(2, 5, 12, bp.mid);
+      c.hline(2, 10, 12, bp.mid);
+      c.px(2, 5, bp.trim);
+      c.px(13, 5, bp.trim);
+      c.px(2, 10, bp.trim);
+      c.px(13, 10, bp.trim);
+      break;
+    }
+    case 'final_3': {
+      // Obsidian & gold orbital spire monolith with ornate gilded frame & celestial core gem
+      c.fillRect(2, 2, 12, 12, bp.dark);
+      c.strokeRect(2, 2, 12, 12, bp.accent);
+      c.hline(3, 2, 10, bp.trim);
+      c.vline(2, 3, 10, bp.trim);
+      // Central celestial diamond prism
+      c.line(8, 4, 11, 7, bp.glow);
+      c.line(11, 8, 8, 11, bp.light);
+      c.line(7, 11, 4, 8, bp.light);
+      c.line(4, 7, 7, 4, bp.glow);
+      c.fillRect(7, 7, 2, 2, white);
+      break;
+    }
+    case 'boss_rush': {
+      // Championship arena bronze-gold & slate coliseum plating with crimson chevrons
+      c.strokeRect(3, 3, 10, 10, bp.dark);
+      c.hline(4, 3, 8, bp.trim);
+      c.hline(4, 12, 8, bp.trim);
+      // Championship emblem chevrons
+      c.line(5, 9, 7, 6, bp.accent);
+      c.line(10, 9, 8, 6, bp.accent);
+      c.line(6, 10, 7, 8, bp.glow);
+      c.line(9, 10, 8, 8, bp.glow);
+      c.px(2, 2, bp.glow);
+      c.px(13, 2, bp.glow);
+      c.px(2, 13, bp.glow);
+      c.px(13, 13, bp.glow);
+      break;
+    }
+  }
+}
+
 function buildBiomeTile(stageId: StageId, tileType: TileType): PixelCanvas {
   const c = new PixelCanvas(16, 16);
   const bp = BIOME_PALETTES[stageId];
@@ -1066,94 +1311,51 @@ function buildBiomeTile(stageId: StageId, tileType: TileType): PixelCanvas {
 
   switch (tileType) {
     case TileType.SOLID: {
-      c.fillRect(0, 0, 16, 16, bp.mid);
-      c.strokeRect(0, 0, 16, 16, OUTLINE);
-      // 3-tone metallic/stone bevel
-      c.hline(1, 1, 14, bp.light);
-      c.hline(1, 2, 14, mixRgba(bp.light, bp.mid, 0.45));
-      c.vline(1, 1, 14, bp.light);
-      c.hline(1, 14, 14, bp.dark);
-      c.hline(2, 13, 12, bp.dark);
-      c.vline(14, 1, 14, bp.dark);
-
-      // Biome architectural detailing
-      if (bp.pattern === 'solar') {
-        // Sun-baked sandstone masonry + photovoltaic inlay
-        c.hline(1, 8, 14, bp.dark);
-        c.vline(8, 1, 7, bp.dark);
-        c.vline(4, 8, 6, bp.dark);
-        c.fillRect(10, 4, 3, 2, bp.trim);
-        c.px(11, 4, white);
-      } else if (bp.pattern === 'metro') {
-        // Heavy riveted girder + hazard edge dots
-        c.strokeRect(3, 4, 10, 8, bp.dark);
-        c.hline(4, 5, 8, bp.light);
-        c.px(3, 3, bp.trim);
-        c.px(12, 3, bp.trim);
-        c.px(3, 12, bp.accent);
-        c.px(12, 12, bp.accent);
-      } else if (bp.pattern === 'cryo') {
-        // Frosted crystalline facets
-        c.line(2, 12, 12, 2, bp.light);
-        c.line(4, 13, 13, 4, white);
-        c.fillRect(3, 3, 2, 2, bp.accent);
-      } else if (bp.pattern === 'matrix') {
-        // Cyber circuit board trace
-        c.hline(2, 6, 6, bp.accent);
-        c.vline(8, 6, 5, bp.accent);
-        c.hline(8, 11, 5, bp.accent);
-        c.px(13, 11, white);
-        c.px(3, 11, bp.trim);
-      } else if (bp.pattern === 'industrial') {
-        // Riveted iron plate with cross seam
-        c.hline(2, 8, 12, bp.dark);
-        c.px(3, 3, bp.light);
-        c.px(12, 3, bp.light);
-        c.px(3, 11, bp.light);
-        c.px(12, 11, bp.light);
-        c.fillRect(6, 5, 4, 2, bp.trim);
-      } else if (bp.pattern === 'citadel') {
-        // Armored fortress paneling with emblem line
-        c.strokeRect(3, 3, 10, 10, bp.dark);
-        c.hline(5, 7, 6, bp.accent);
-        c.px(7, 6, bp.trim);
-        c.px(8, 6, bp.trim);
-      } else {
-        // Tech Command Deck paneling
-        c.strokeRect(3, 3, 10, 9, bp.dark);
-        c.hline(4, 4, 8, bp.light);
-        c.hline(5, 8, 6, bp.accent);
-        c.px(4, 10, bp.trim);
-        c.px(11, 10, bp.trim);
-      }
+      drawBespokeSolidTile(c, stageId, bp);
       break;
     }
 
     case TileType.ONE_WAY: {
-      // Crisp metallic catwalk grate (top 6px structural deck)
+      // Biome-themed metallic catwalk grate (top 6px structural deck + under-truss)
       c.fillRect(0, 0, 16, 6, bp.dark);
       c.hline(0, 0, 16, OUTLINE);
       c.hline(0, 1, 16, bp.light);
       c.hline(0, 2, 16, bp.accent);
       c.hline(0, 5, 16, OUTLINE);
-      // Cross-truss lattice
-      for (let x = 1; x < 15; x += 4) {
-        c.vline(x, 3, 2, bp.light);
-        c.px(x + 2, 4, bp.mid);
-        c.vline(x, 6, 2, bp.dark);
-        c.px(x, 8, OUTLINE);
+      if (stageId === 'cooler') {
+        // Frosted icicle crystal teeth beneath cryo bridge
+        for (let x = 2; x < 15; x += 4) {
+          c.vline(x, 6, 3, bp.light);
+          c.px(x, 8, white);
+          c.px(x + 1, 6, bp.accent);
+        }
+      } else if (stageId === 'patch' || stageId === 'break') {
+        // Hazard-striped foundry catwalk girder
+        for (let x = 1; x < 15; x += 4) {
+          c.fillRect(x, 3, 2, 2, bp.trim);
+          c.vline(x, 6, 2, bp.dark);
+          c.px(x, 8, OUTLINE);
+        }
+      } else {
+        // Cross-truss lattice
+        for (let x = 1; x < 15; x += 4) {
+          c.vline(x, 3, 2, bp.light);
+          c.px(x + 2, 4, bp.trim);
+          c.vline(x, 6, 2, bp.dark);
+          c.px(x, 8, OUTLINE);
+        }
       }
       break;
     }
 
     case TileType.SPIKE: {
       const tipHi = white;
-      const bladeMid = parseHexColor('#cbd5e1');
-      const bladeDark = parseHexColor('#475569');
+      const bladeMid = stageId === 'cooler' ? parseHexColor('#bae6fd') : parseHexColor('#cbd5e1');
+      const bladeDark = stageId === 'cooler' ? parseHexColor('#0284c7') : parseHexColor('#475569');
       const warnRed = parseHexColor('#ef4444');
-      const warnGold = parseHexColor('#facc15');
+      const warnGold = bp.trim;
       // Base hazard bar
-      c.fillRect(0, 12, 16, 4, steelDark);
+      c.fillRect(0, 12, 16, 4, bp.dark);
       c.hline(0, 12, 16, OUTLINE);
       c.hline(0, 15, 16, OUTLINE);
       for (let x = 1; x < 15; x += 4) {
@@ -1179,9 +1381,9 @@ function buildBiomeTile(stageId: StageId, tileType: TileType): PixelCanvas {
     }
 
     case TileType.BREAKABLE: {
-      const rockDark = mixRgba(bp.dark, parseHexColor('#3b2416'), 0.4);
-      const rockMid = mixRgba(bp.mid, parseHexColor('#9a633e'), 0.35);
-      const rockHi = mixRgba(bp.light, parseHexColor('#e2b182'), 0.35);
+      const rockDark = mixRgba(bp.dark, parseHexColor('#3b2416'), 0.35);
+      const rockMid = mixRgba(bp.mid, parseHexColor('#9a633e'), 0.32);
+      const rockHi = mixRgba(bp.light, parseHexColor('#e2b182'), 0.32);
       c.fillRect(0, 0, 16, 16, rockMid);
       c.strokeRect(0, 0, 16, 16, OUTLINE);
       c.hline(1, 1, 14, rockHi);
@@ -1232,7 +1434,7 @@ function buildBiomeTile(stageId: StageId, tileType: TileType): PixelCanvas {
       c.hline(1, 1, 14, steelHi);
       c.hline(1, 2, 14, beltMid);
       c.hline(1, 13, 14, beltMid);
-      c.hline(1, 14, 14, steelDark);
+      c.hline(1, 14, 14, bp.dark);
       // Mechanical rollers
       c.fillCircle(3, 8, 2, steelMid);
       c.px(3, 8, steelHi);
@@ -1263,7 +1465,7 @@ function buildBiomeTile(stageId: StageId, tileType: TileType): PixelCanvas {
       const copper = parseHexColor('#d97706');
       const copperHi = parseHexColor('#fcd34d');
       const arcCyan = parseHexColor('#38f9ff');
-      c.fillRect(0, 0, 16, 16, steelDark);
+      c.fillRect(0, 0, 16, 16, bp.dark);
       c.strokeRect(0, 0, 16, 16, OUTLINE);
       // Copper coil insulators left & right
       c.fillRect(1, 2, 3, 12, copper);
@@ -1313,7 +1515,7 @@ function buildBiomeTile(stageId: StageId, tileType: TileType): PixelCanvas {
       const padHi = parseHexColor('#bbf7d0');
       const padGold = parseHexColor('#facc15');
       // Base housing
-      c.fillRect(1, 12, 14, 4, steelDark);
+      c.fillRect(1, 12, 14, 4, bp.dark);
       c.strokeRect(1, 12, 14, 4, OUTLINE);
       // Coiled spring
       c.line(4, 11, 11, 9, steelHi);
@@ -1331,7 +1533,7 @@ function buildBiomeTile(stageId: StageId, tileType: TileType): PixelCanvas {
       const gold = parseHexColor('#f59e0b');
       const prismHi = parseHexColor('#e0f2fe');
       const prismMid = parseHexColor('#38f9ff');
-      c.fillRect(0, 0, 16, 16, steelDark);
+      c.fillRect(0, 0, 16, 16, bp.dark);
       c.strokeRect(0, 0, 16, 16, OUTLINE);
       c.strokeRect(1, 1, 14, 14, bp.mid);
       // Gold lens brackets
@@ -1350,9 +1552,9 @@ function buildBiomeTile(stageId: StageId, tileType: TileType): PixelCanvas {
       const pylonGlow = parseHexColor('#38f9ff');
       const pylonGold = parseHexColor('#facc15');
       // Pedestal base
-      c.fillRect(3, 12, 10, 4, steelMid);
+      c.fillRect(3, 12, 10, 4, bp.mid);
       c.strokeRect(3, 12, 10, 4, OUTLINE);
-      c.hline(4, 13, 8, steelHi);
+      c.hline(4, 13, 8, bp.light);
       // Slim vertical emitter mast
       c.fillRect(6, 5, 4, 7, steelDark);
       c.vline(7, 5, 7, pylonGlow);
@@ -1368,13 +1570,13 @@ function buildBiomeTile(stageId: StageId, tileType: TileType): PixelCanvas {
     case TileType.GOAL_DOOR: {
       const doorGlow = parseHexColor('#34d399');
       const hazardGold = parseHexColor('#facc15');
-      c.fillRect(0, 0, 16, 16, steelDark);
+      c.fillRect(0, 0, 16, 16, bp.dark);
       c.strokeRect(0, 0, 16, 16, OUTLINE);
       // Armored bulkhead frame
-      c.fillRect(1, 1, 3, 14, steelMid);
-      c.fillRect(12, 1, 3, 14, steelMid);
-      c.vline(2, 2, 12, steelHi);
-      c.vline(13, 2, 12, steelHi);
+      c.fillRect(1, 1, 3, 14, bp.mid);
+      c.fillRect(12, 1, 3, 14, bp.mid);
+      c.vline(2, 2, 12, bp.light);
+      c.vline(13, 2, 12, bp.light);
       // Center blast door seam + lock core
       c.vline(7, 1, 14, OUTLINE);
       c.vline(8, 1, 14, OUTLINE);
@@ -1390,13 +1592,13 @@ function buildBiomeTile(stageId: StageId, tileType: TileType): PixelCanvas {
     case TileType.CRUSHER: {
       const warnYellow = parseHexColor('#facc15');
       const pistonHi = parseHexColor('#e2e8f0');
-      c.fillRect(0, 0, 16, 16, steelMid);
+      c.fillRect(0, 0, 16, 16, bp.mid);
       c.strokeRect(0, 0, 16, 16, OUTLINE);
       c.hline(1, 1, 14, pistonHi);
       // Hydraulic vertical piston grooves
-      c.fillRect(3, 2, 3, 8, steelDark);
+      c.fillRect(3, 2, 3, 8, bp.dark);
       c.vline(4, 2, 8, pistonHi);
-      c.fillRect(10, 2, 3, 8, steelDark);
+      c.fillRect(10, 2, 3, 8, bp.dark);
       c.vline(11, 2, 8, pistonHi);
       // Caution striped crusher underside
       c.fillRect(1, 11, 14, 4, OUTLINE);
@@ -1407,8 +1609,8 @@ function buildBiomeTile(stageId: StageId, tileType: TileType): PixelCanvas {
     }
 
     case TileType.PROXIMITY_SOLID: {
-      const holo = parseHexColor('#38f9ff');
-      const holoFill = parseHexColor('#0e4a6b');
+      const holo = bp.accent;
+      const holoFill = mixRgba(bp.dark, holo, 0.28);
       c.fillRect(1, 1, 14, 14, holoFill);
       c.strokeRect(0, 0, 16, 16, OUTLINE);
       c.strokeRect(1, 1, 14, 14, holo);
@@ -1684,50 +1886,56 @@ function buildEnemySprite(family: EnemyFamily): PixelCanvas {
 }
 
 function buildBossSiegeTread(): PixelCanvas {
-  // 48x40 Heavy Armored Tread Assault Mech
+  // 48x40 Armored Rail Juggernaut — heavy siege tank mech with twin barrels, radar & 5-wheel treads
   const c = new PixelCanvas(48, 40);
   const hullDark = parseHexColor('#1e293b');
   const hullMid = parseHexColor('#475569');
   const hullHi = parseHexColor('#94a3b8');
+  const crimDark = parseHexColor('#7f1d1d');
+  const crimMid = parseHexColor('#dc2626');
   const orange = parseHexColor('#ea580c');
   const gold = parseHexColor('#facc15');
-  const red = parseHexColor('#ef4444');
+  const red = parseHexColor('#ff4d6d');
   const white = parseHexColor('#f8fafc');
   const track = parseHexColor('#0f172a');
 
-  // Dorsal mortar tubes & radar
+  // Dorsal mortar tubes & glowing crimson radar mast
   c.fillRect(12, 3, 7, 7, hullDark);
   c.hline(13, 3, 5, hullHi);
   c.fillRect(14, 2, 3, 2, orange);
   c.vline(9, 2, 10, hullHi);
-  c.px(9, 2, red);
+  c.fillRect(8, 1, 3, 2, red);
+  c.px(9, 1, white);
 
   // Upper rotary cannon turret
   c.fillRect(14, 8, 18, 8, hullMid);
   c.hline(15, 8, 16, hullHi);
-  c.fillRect(18, 10, 6, 4, orange);
+  c.fillRect(17, 10, 8, 4, crimMid);
+  c.hline(18, 10, 6, orange);
   // Twin heavy forward cannon barrels (pointing right)
   c.fillRect(31, 9, 13, 3, hullDark);
   c.hline(32, 9, 11, hullHi);
   c.fillRect(42, 9, 2, 3, gold);
   c.fillRect(31, 13, 11, 2, hullDark);
   c.hline(32, 13, 9, hullHi);
+  c.px(41, 13, orange);
 
   // Main armored chassis hull
   c.fillRect(6, 15, 34, 13, hullMid);
   c.hline(7, 15, 32, hullHi);
   c.hline(7, 26, 32, hullDark);
-  // Sloped armor panels & orange hazard stripes
-  c.fillRect(8, 17, 6, 8, orange);
-  c.hline(9, 18, 4, gold);
-  c.hline(9, 21, 4, hullDark);
+  // Sloped crimson-orange hazard stripes
+  c.fillRect(8, 17, 7, 8, crimDark);
+  c.fillRect(9, 18, 5, 2, gold);
+  c.fillRect(9, 21, 5, 2, orange);
   // Blazing crimson cyclops bridge sensor
   c.fillRect(24, 17, 13, 6, hullDark);
   c.fillRect(26, 18, 10, 4, red);
   c.hline(28, 19, 7, white);
+  c.px(34, 19, gold);
   // Front armored dozer spikes
-  c.fillRect(39, 19, 5, 8, orange);
-  c.fillRect(43, 20, 3, 2, hullHi);
+  c.fillRect(39, 18, 5, 9, crimMid);
+  c.fillRect(43, 19, 3, 2, hullHi);
   c.fillRect(43, 24, 3, 2, hullHi);
 
   // Massive caterpillar tread unit
@@ -1746,7 +1954,7 @@ function buildBossSiegeTread(): PixelCanvas {
 }
 
 function buildBossPrism(): PixelCanvas {
-  // 36x40 Solar Prism Master with crystalline solar cape & radiant visor
+  // 36x40 Solar Refraction Circuit — white/gold solar armor, faceted crystal cape & orbiting prism blade
   const c = new PixelCanvas(36, 40);
   const ivoryDark = parseHexColor('#94a3b8');
   const ivoryMid = parseHexColor('#e2e8f0');
@@ -1776,27 +1984,24 @@ function buildBossPrism(): PixelCanvas {
   c.fillRect(12, 35, 6, 3, goldMid);
   c.fillRect(19, 35, 7, 3, goldMid);
   c.hline(20, 35, 5, goldHi);
-  // Knee prism gems
   c.fillRect(20, 29, 3, 2, cyanMid);
 
   // Sculpted solar armor torso
   c.fillRect(13, 13, 11, 12, ivoryMid);
   c.hline(14, 13, 9, ivoryHi);
-  c.fillRect(11, 13, 4, 4, goldMid); // back pauldron
-  c.fillRect(22, 13, 4, 4, goldMid); // front pauldron
+  c.fillRect(11, 13, 4, 4, goldMid);
+  c.fillRect(22, 13, 4, 4, goldMid);
   c.px(23, 13, goldHi);
   // Radiant chest sun-core
   c.fillRect(16, 15, 5, 5, goldDark);
   c.fillRect(17, 16, 3, 3, cyanMid);
   c.px(18, 17, ivoryHi);
-  // Golden belt
   c.hline(13, 23, 11, goldMid);
   c.fillRect(17, 22, 3, 3, goldHi);
 
-  // Regal crowned helmet with sun-crest horns
+  // Regal crowned helmet with twin solar horns
   c.fillRect(14, 5, 10, 8, ivoryMid);
   c.hline(15, 5, 8, ivoryHi);
-  // Twin solar crown horns
   c.line(16, 5, 13, 1, goldMid);
   c.line(17, 5, 14, 1, goldHi);
   c.line(21, 5, 25, 1, goldMid);
@@ -1807,9 +2012,8 @@ function buildBossPrism(): PixelCanvas {
   c.hline(18, 9, 6, cyanMid);
   c.hline(20, 9, 3, ivoryHi);
 
-  // Forward extended hand & floating crystal emitter blade
+  // Forward extended emitter hand & orbiting diamond prism blade
   c.fillRect(23, 17, 5, 3, goldMid);
-  // Orbiting diamond prism blade (right side)
   c.line(31, 8, 28, 16, cyanMid);
   c.line(31, 8, 34, 16, goldHi);
   c.line(28, 16, 31, 26, cyanDark);
@@ -1821,275 +2025,754 @@ function buildBossPrism(): PixelCanvas {
   return c;
 }
 
-function buildGenericBossVariant(
-  bossId: Exclude<BossId, 'siege_tread' | 'prism'>,
-): PixelCanvas {
-  const specs: Record<
-    Exclude<BossId, 'siege_tread' | 'prism'>,
-    { w: number; h: number; dark: string; mid: string; hi: string; acc: string; glow: string; style: 'knight' | 'heavy' | 'crystal' | 'apex' }
-  > = {
-    stitch: { w: 36, h: 40, dark: '#14532d', mid: '#22c55e', hi: '#86efac', acc: '#f59e0b', glow: '#38f9ff', style: 'knight' },
-    frostfang: { w: 36, h: 40, dark: '#1e3a8a', mid: '#38bdf8', hi: '#e0f2fe', acc: '#cbd5e1', glow: '#67e8f9', style: 'knight' },
-    arcbolt: { w: 36, h: 40, dark: '#3b0764', mid: '#9333ea', hi: '#d8b4fe', acc: '#facc15', glow: '#fef08a', style: 'knight' },
-    strider: { w: 36, h: 40, dark: '#134e4a', mid: '#14b8a6', hi: '#99f6e4', acc: '#fb7185', glow: '#f8fafc', style: 'knight' },
-    tempo: { w: 36, h: 40, dark: '#701a75', mid: '#ec4899', hi: '#fbcfe8', acc: '#38f9ff', glow: '#fde047', style: 'knight' },
-    crag: { w: 44, h: 40, dark: '#431407', mid: '#c2410c', hi: '#fdba74', acc: '#78716c', glow: '#facc15', style: 'heavy' },
-    phantom: { w: 36, h: 40, dark: '#1e1b4b', mid: '#4f46e5', hi: '#a5b4fc', acc: '#10b981', glow: '#34d399', style: 'knight' },
-    mirror_rival: { w: 36, h: 40, dark: '#3f0a1d', mid: '#be123c', hi: '#fda4af', acc: '#a855f7', glow: '#ff2e63', style: 'knight' },
-    prism_core: { w: 44, h: 40, dark: '#1e3a5f', mid: '#38bdf8', hi: '#e0f2fe', acc: '#fbbf24', glow: '#ffffff', style: 'crystal' },
-    overlord_apex: { w: 48, h: 40, dark: '#27133a', mid: '#6d28d9', hi: '#c4b5fd', acc: '#f59e0b', glow: '#f43f5e', style: 'apex' },
-  };
-  const s = specs[bossId];
-  const c = new PixelCanvas(s.w, s.h);
-  const dark = parseHexColor(s.dark);
-  const mid = parseHexColor(s.mid);
-  const hi = parseHexColor(s.hi);
-  const acc = parseHexColor(s.acc);
-  const glow = parseHexColor(s.glow);
+function buildBossStitch(): PixelCanvas {
+  // 36x40 Foundry Seam Circuit — olive/amber welder-smith with twin spools, welder goggles & heavy grapple claw
+  const c = new PixelCanvas(36, 40);
+  const dark = parseHexColor('#2a361a');
+  const mid = parseHexColor('#658237');
+  const hi = parseHexColor('#b8db72');
+  const orange = parseHexColor('#ea580c');
+  const gold = parseHexColor('#fde047');
+  const steelDark = parseHexColor('#1e293b');
+  const steelHi = parseHexColor('#cbd5e1');
+  const cyan = parseHexColor('#38f9ff');
+  const white = parseHexColor('#f8fafc');
 
-  if (s.style === 'crystal') {
-    // Floating crystalline core monolith + orbiting shields
-    c.fillEllipse(22, 20, 10, 15, mid);
-    c.fillEllipse(21, 18, 6, 10, hi);
-    c.fillCircle(22, 20, 4, dark);
-    c.fillCircle(22, 20, 2, glow);
-    // Orbiting left/right diamond shield shards
-    c.fillRect(4, 12, 5, 14, acc);
-    c.vline(6, 13, 12, hi);
-    c.fillRect(35, 12, 5, 14, acc);
-    c.vline(37, 13, 12, hi);
-    c.addOutline(OUTLINE);
-    return c;
-  }
+  // Rear foundry wire-spool backpack & crane hook
+  c.fillRect(4, 10, 7, 11, steelDark);
+  c.fillRect(5, 12, 5, 7, orange);
+  c.hline(5, 13, 5, gold);
+  c.hline(5, 16, 5, gold);
+  c.line(7, 10, 4, 4, steelHi);
+  c.px(4, 4, gold);
 
-  if (s.style === 'apex') {
-    // Colossal final overlord commander with twin floating gauntlets
-    // Crown & head
-    c.fillRect(16, 4, 16, 11, mid);
-    c.hline(17, 4, 14, hi);
-    c.fillRect(14, 1, 3, 6, acc);
-    c.fillRect(31, 1, 3, 6, acc);
-    c.fillRect(21, 6, 6, 3, glow); // forehead reactor eye
-    c.fillRect(18, 11, 12, 2, dark);
-    // Broad armored chest
-    c.fillRect(11, 15, 26, 17, mid);
-    c.hline(12, 15, 24, hi);
-    c.fillRect(19, 19, 10, 8, dark);
-    c.fillRect(21, 21, 6, 4, glow);
-    c.fillRect(14, 32, 8, 6, dark);
-    c.fillRect(26, 32, 8, 6, dark);
-    // Floating colossal gauntlets left & right
-    c.fillRect(2, 16, 7, 13, acc);
-    c.vline(4, 17, 11, hi);
-    c.fillRect(39, 16, 7, 13, acc);
-    c.vline(41, 17, 11, hi);
-    c.addOutline(OUTLINE);
-    return c;
-  }
+  // Heavy articulated foundry legs & orange steel-toe boots
+  c.fillRect(11, 25, 5, 11, dark);
+  c.vline(13, 25, 10, mid);
+  c.fillRect(18, 25, 5, 11, mid);
+  c.vline(21, 25, 10, hi);
+  c.fillRect(9, 35, 7, 3, orange);
+  c.fillRect(18, 35, 8, 3, orange);
+  c.hline(19, 35, 6, gold);
 
-  if (s.style === 'heavy') {
-    // Hulking beveled demolition juggernaut with hydraulic shoulders & pile-driver fists
-    c.fillRect(14, 4, 14, 8, mid);
-    c.hline(15, 4, 12, hi);
-    c.fillRect(16, 2, 10, 2, acc);
-    c.fillRect(18, 7, 8, 3, dark);
-    c.hline(19, 8, 6, glow);
-    // Broad sloped chestplate
-    c.fillRect(9, 12, 24, 14, mid);
-    c.hline(10, 12, 22, hi);
-    c.hline(10, 25, 22, dark);
-    c.fillRect(14, 15, 14, 7, dark);
-    c.fillRect(17, 16, 8, 5, acc);
-    c.fillRect(19, 17, 4, 3, glow);
-    // Hydraulic shoulder pauldrons & pile-driver fists
-    c.fillRect(4, 11, 6, 7, acc);
-    c.hline(5, 11, 4, hi);
-    c.fillRect(32, 11, 6, 7, acc);
-    c.hline(33, 11, 4, hi);
-    c.fillRect(2, 18, 8, 10, dark);
-    c.fillRect(3, 19, 6, 8, acc);
-    c.vline(4, 19, 8, hi);
-    c.fillRect(32, 18, 10, 10, dark);
-    c.fillRect(33, 19, 8, 8, acc);
-    c.vline(39, 19, 8, hi);
-    c.vline(41, 20, 6, glow);
-    // Armored pillar legs & knee pistons
-    c.fillRect(11, 26, 7, 11, dark);
-    c.vline(13, 26, 10, mid);
-    c.fillRect(24, 26, 7, 11, dark);
-    c.vline(27, 26, 10, hi);
-    c.fillRect(10, 35, 9, 3, acc);
-    c.fillRect(23, 35, 10, 3, acc);
-    c.hline(24, 35, 8, hi);
-    c.addOutline(OUTLINE);
-    return c;
-  }
+  // Riveted welder apron torso + glowing smelter furnace core
+  c.fillRect(10, 13, 14, 13, mid);
+  c.hline(11, 13, 12, hi);
+  c.fillRect(11, 22, 12, 4, steelDark);
+  c.fillRect(13, 15, 8, 6, steelDark);
+  c.fillRect(15, 16, 4, 4, orange);
+  c.fillRect(16, 17, 2, 2, gold);
+  c.px(16, 17, white);
+  // Twin bolted shoulder spools
+  c.fillRect(8, 12, 4, 5, orange);
+  c.hline(9, 12, 2, gold);
+  c.fillRect(22, 12, 5, 5, orange);
+  c.hline(23, 12, 3, gold);
 
-  // Agile Circuit Master boss rig with sculpted silhouette, flowing angled cape & signature weapon
-  // Flowing tapered energy cape draping left
-  for (let y = 13; y <= 34; y++) {
-    const left = Math.max(2, 13 - Math.floor((y - 12) * 0.45));
-    for (let x = left; x <= 14; x++) {
-      c.px(x, y, x < left + 2 ? acc : (x + y) % 4 === 0 ? hi : dark);
-    }
-  }
-  // Articulated cyber legs with knee guards & armored sabatons
-  c.line(14, 24, 12, 35, dark);
-  c.line(15, 24, 13, 35, dark);
-  c.line(16, 24, 14, 35, mid);
-  c.line(20, 24, 22, 35, mid);
-  c.line(21, 24, 23, 35, mid);
-  c.line(22, 24, 24, 35, hi);
-  c.fillRect(20, 28, 4, 2, acc); // knee guard
-  c.fillRect(10, 35, 6, 3, acc);
-  c.fillRect(20, 35, 7, 3, acc);
-  c.hline(21, 35, 5, hi);
+  // Welder-hood helmet with twin glowing goggles
+  c.fillRect(12, 4, 11, 9, mid);
+  c.hline(13, 4, 9, hi);
+  c.fillRect(14, 2, 7, 2, orange);
+  c.fillRect(14, 7, 9, 4, steelDark);
+  c.fillRect(15, 8, 3, 2, cyan);
+  c.fillRect(19, 8, 3, 2, gold);
+  c.px(16, 8, white);
+  c.px(20, 8, white);
 
-  // Tapered V-shaped chestplate & angled pauldrons
-  c.fillRect(13, 13, 10, 8, mid);
-  c.fillRect(14, 21, 8, 4, dark);
-  c.hline(14, 13, 8, hi);
-  c.fillRect(10, 12, 4, 4, acc);
-  c.px(11, 12, hi);
-  c.fillRect(22, 12, 5, 4, acc);
-  c.hline(23, 12, 3, hi);
-  // Glowing torso core + belt
-  c.fillRect(16, 15, 4, 4, dark);
-  c.fillRect(17, 16, 2, 2, glow);
-  c.hline(14, 22, 8, acc);
+  // Massive articulated industrial grapple-pincer & welder arc right arm
+  c.fillRect(24, 16, 5, 4, steelHi);
+  c.line(28, 15, 33, 11, orange);
+  c.line(29, 16, 34, 12, gold);
+  c.line(28, 19, 33, 23, orange);
+  c.line(29, 18, 34, 22, gold);
+  c.fillRect(30, 16, 3, 3, cyan);
+  c.px(31, 17, white);
 
-  // Sculpted angular helmet with boss-specific crest horns/fins
-  c.fillRect(14, 5, 10, 8, mid);
-  c.hline(15, 5, 8, hi);
-  if (bossId === 'frostfang' || bossId === 'mirror_rival') {
-    c.line(15, 5, 12, 1, acc);
-    c.line(21, 5, 25, 1, hi);
-  } else if (bossId === 'arcbolt' || bossId === 'tempo') {
-    c.fillRect(12, 3, 2, 5, glow);
-    c.fillRect(23, 3, 2, 5, glow);
-    c.fillRect(17, 2, 3, 3, acc);
-  } else if (bossId === 'strider') {
-    // Swept aerodynamic jet wings
-    c.line(11, 14, 2, 7, hi);
-    c.line(11, 15, 3, 9, mid);
-    c.line(15, 5, 10, 2, acc);
-  } else {
-    c.fillRect(16, 2, 5, 3, acc);
-    c.hline(17, 2, 3, hi);
-  }
-  // Recessed dark visor with gleaming slit
-  c.fillRect(17, 8, 7, 3, dark);
-  c.hline(18, 9, 6, glow);
-  c.hline(20, 9, 3, hi);
-
-  // Signature front weapon arm / energy blade
-  c.fillRect(23, 16, 6, 3, mid);
-  c.hline(24, 16, 5, hi);
-  if (bossId === 'frostfang' || bossId === 'phantom' || bossId === 'mirror_rival') {
-    // Swept energy blade
-    c.line(28, 17, 34, 11, glow);
-    c.line(28, 18, 34, 12, hi);
-    c.line(28, 19, 33, 14, acc);
-  } else if (bossId === 'arcbolt') {
-    // Crackling lightning lance
-    c.line(28, 17, 31, 14, glow);
-    c.line(31, 14, 33, 18, hi);
-    c.line(33, 18, 35, 15, glow);
-  } else {
-    // Heavy cyber cannon / gauntlet emitter
-    c.fillRect(28, 15, 5, 5, acc);
-    c.fillRect(31, 16, 3, 3, glow);
-    c.px(32, 17, hi);
-  }
   c.addOutline(OUTLINE);
   return c;
 }
 
+function buildBossFrostfang(): PixelCanvas {
+  // 36x40 Cryo-Vault Circuit — wolf-crested glacial hunter with jagged ice pauldrons & crystalline greatsword
+  const c = new PixelCanvas(36, 40);
+  const dark = parseHexColor('#1e3a8a');
+  const mid = parseHexColor('#0284c7');
+  const ice = parseHexColor('#38bdf8');
+  const hi = parseHexColor('#e0f2fe');
+  const violet = parseHexColor('#8b5cf6');
+  const cyan = parseHexColor('#67e8f9');
+  const white = parseHexColor('#ffffff');
+
+  // Flowing icy aurora scarf streaming left
+  c.line(12, 13, 3, 18, ice);
+  c.line(12, 14, 2, 20, cyan);
+  c.line(12, 15, 4, 23, violet);
+  c.line(6, 17, 3, 19, white);
+
+  // Agile lupine cyber legs with jagged frost greaves
+  c.line(14, 24, 10, 35, dark);
+  c.line(15, 24, 11, 35, mid);
+  c.line(19, 24, 22, 35, ice);
+  c.line(20, 24, 23, 35, hi);
+  c.fillRect(8, 35, 6, 3, dark);
+  c.fillRect(20, 35, 7, 3, ice);
+  c.hline(21, 35, 5, white);
+
+  // Sleek glacial armor torso & crystalline shoulder icicles
+  c.fillRect(12, 13, 10, 11, mid);
+  c.hline(13, 13, 8, hi);
+  c.fillRect(15, 16, 4, 4, dark);
+  c.fillRect(16, 17, 2, 2, cyan);
+  c.px(16, 17, white);
+  // Jagged upward ice-spike pauldrons
+  c.line(12, 13, 7, 8, ice);
+  c.line(12, 14, 8, 10, hi);
+  c.line(22, 13, 27, 9, ice);
+  c.line(22, 14, 26, 10, white);
+
+  // Lupine wolf-eared frost helmet & glowing twin-fang cyan visor
+  c.fillRect(13, 5, 10, 8, ice);
+  c.hline(14, 5, 8, white);
+  c.line(14, 5, 11, 1, dark);
+  c.line(15, 5, 12, 1, hi);
+  c.line(20, 5, 23, 1, dark);
+  c.line(21, 5, 24, 1, hi);
+  c.fillRect(16, 8, 7, 3, dark);
+  c.hline(17, 9, 6, cyan);
+  c.px(19, 9, white);
+  c.px(21, 10, white);
+
+  // Swept crystalline frost greatsword held forward-up
+  c.fillRect(21, 17, 5, 3, violet);
+  c.line(25, 19, 34, 5, ice);
+  c.line(26, 19, 34, 7, white);
+  c.line(26, 20, 33, 10, cyan);
+  c.line(25, 18, 32, 6, hi);
+
+  c.addOutline(OUTLINE);
+  return c;
+}
+
+function buildBossArcbolt(): PixelCanvas {
+  // 36x40 High-Voltage Circuit — indigo/gold Tesla knight with twin shoulder coils & crackling lightning trident
+  const c = new PixelCanvas(36, 40);
+  const dark = parseHexColor('#1e1b4b');
+  const mid = parseHexColor('#4f46e5');
+  const hi = parseHexColor('#a5b4fc');
+  const goldDark = parseHexColor('#b45309');
+  const gold = parseHexColor('#facc15');
+  const cyan = parseHexColor('#38f9ff');
+  const white = parseHexColor('#ffffff');
+
+  // Twin high-voltage Tesla coil spires on shoulders + overhead arc
+  c.fillRect(7, 6, 4, 9, goldDark);
+  c.hline(7, 7, 4, gold);
+  c.hline(7, 10, 4, gold);
+  c.fillCircle(9, 5, 2, cyan);
+  c.px(9, 5, white);
+  c.fillRect(23, 6, 4, 9, goldDark);
+  c.hline(23, 7, 4, gold);
+  c.hline(23, 10, 4, gold);
+  c.fillCircle(25, 5, 2, cyan);
+  c.px(25, 5, white);
+  // Crackling overhead plasma arc between Tesla coils
+  c.line(10, 4, 15, 2, cyan);
+  c.line(15, 2, 19, 4, white);
+  c.line(19, 4, 24, 3, cyan);
+
+  // Armored conductor legs with golden coil cuffs
+  c.fillRect(11, 25, 4, 11, dark);
+  c.vline(13, 25, 10, mid);
+  c.fillRect(19, 25, 4, 11, mid);
+  c.vline(21, 25, 10, hi);
+  c.fillRect(10, 34, 6, 4, gold);
+  c.fillRect(18, 34, 7, 4, gold);
+  c.hline(19, 34, 5, white);
+
+  // Sculpted indigo/gold capacitor torso
+  c.fillRect(11, 13, 12, 12, mid);
+  c.hline(12, 13, 10, hi);
+  c.fillRect(14, 15, 6, 6, dark);
+  c.line(18, 15, 15, 18, gold);
+  c.line(15, 18, 19, 18, white);
+  c.line(19, 18, 16, 21, gold);
+  c.hline(11, 23, 12, gold);
+
+  // Bolt-crested angular helmet + glowing electric visor
+  c.fillRect(13, 6, 9, 7, mid);
+  c.hline(14, 6, 7, hi);
+  c.fillRect(16, 4, 3, 3, gold);
+  c.fillRect(15, 8, 7, 3, dark);
+  c.hline(16, 9, 6, gold);
+  c.hline(18, 9, 3, white);
+
+  // Crackling lightning lance extending right
+  c.fillRect(22, 17, 6, 3, gold);
+  c.line(27, 18, 30, 14, cyan);
+  c.line(30, 14, 32, 20, white);
+  c.line(32, 20, 34, 15, gold);
+  c.px(34, 14, white);
+
+  c.addOutline(OUTLINE);
+  return c;
+}
+
+function buildBossStrider(): PixelCanvas {
+  // 36x40 Skyway Velocity Circuit — crimson/teal aero jet-valkyrie with swept thruster wings & falcon visor
+  const c = new PixelCanvas(36, 40);
+  const dark = parseHexColor('#66112d');
+  const mid = parseHexColor('#e11d48');
+  const hi = parseHexColor('#fda4af');
+  const teal = parseHexColor('#14b8a6');
+  const cyan = parseHexColor('#38f9ff');
+  const mint = parseHexColor('#34d399');
+  const white = parseHexColor('#f8fafc');
+
+  // Swept-back twin delta jet wings + glowing emerald thruster plumes
+  c.line(13, 14, 2, 5, hi);
+  c.line(13, 15, 2, 7, mid);
+  c.line(13, 16, 4, 10, dark);
+  c.line(12, 18, 2, 14, teal);
+  c.line(12, 19, 3, 16, cyan);
+  // Thruster exhaust jet flames
+  c.line(5, 18, 2, 23, mint);
+  c.line(6, 19, 3, 24, white);
+
+  // Sleek aerodynamic bladed sprint legs
+  c.line(15, 24, 11, 35, dark);
+  c.line(16, 24, 12, 35, mid);
+  c.line(19, 24, 24, 35, mid);
+  c.line(20, 24, 25, 35, hi);
+  c.fillRect(10, 34, 5, 4, teal);
+  c.fillRect(22, 34, 7, 4, teal);
+  c.hline(23, 35, 5, white);
+
+  // Tapered fuselage chestplate with glowing emerald thruster core
+  c.fillRect(13, 13, 10, 11, mid);
+  c.hline(14, 13, 8, hi);
+  c.fillRect(16, 15, 4, 4, dark);
+  c.fillRect(17, 16, 2, 2, mint);
+  c.px(17, 16, white);
+  c.fillRect(21, 13, 4, 3, teal);
+
+  // Swept falcon aero helmet + gleaming turquoise visor
+  c.fillRect(14, 5, 10, 8, mid);
+  c.hline(15, 5, 8, hi);
+  c.line(15, 5, 9, 2, hi); // swept aero fin
+  c.line(15, 6, 10, 4, teal);
+  c.fillRect(17, 8, 7, 3, dark);
+  c.hline(18, 9, 6, mint);
+  c.hline(20, 9, 3, white);
+
+  // Forward twin airfoil energy blade
+  c.fillRect(23, 16, 5, 3, teal);
+  c.line(27, 16, 34, 13, cyan);
+  c.line(27, 17, 34, 14, white);
+  c.line(27, 18, 33, 16, mint);
+
+  c.addOutline(OUTLINE);
+  return c;
+}
+
+function buildBossTempo(): PixelCanvas {
+  // 36x40 Resonance Pulse Circuit — magenta/violet synthwave diva with oversized headphones & holo sound-staff
+  const c = new PixelCanvas(36, 40);
+  const dark = parseHexColor('#4a044e');
+  const mid = parseHexColor('#c026d3');
+  const hi = parseHexColor('#f5d0fe');
+  const cyan = parseHexColor('#38f9ff');
+  const gold = parseHexColor('#fde047');
+  const teal = parseHexColor('#14b8a6');
+  const white = parseHexColor('#ffffff');
+
+  // Floating neon acoustic halo ring behind head
+  c.strokeRect(8, 2, 18, 12, cyan);
+  c.px(9, 3, white);
+  c.px(24, 3, white);
+
+  // Flared sonic speaker boots & agile legs
+  c.fillRect(12, 24, 4, 11, dark);
+  c.fillRect(18, 24, 4, 11, mid);
+  c.fillRect(9, 33, 7, 5, mid);
+  c.hline(10, 35, 5, cyan);
+  c.fillRect(18, 33, 8, 5, mid);
+  c.hline(19, 35, 6, cyan);
+  c.hline(19, 33, 6, hi);
+
+  // Synth equalizer torso & glowing waist sash
+  c.fillRect(12, 13, 11, 11, dark);
+  c.strokeRect(12, 13, 11, 11, mid);
+  c.vline(14, 17, 5, cyan);
+  c.vline(16, 15, 7, gold);
+  c.vline(18, 16, 6, hi);
+  c.vline(20, 14, 8, teal);
+  c.hline(12, 23, 11, hi);
+
+  // Helmet with oversized glowing DJ headphone ear-cups
+  c.fillRect(13, 5, 9, 8, mid);
+  c.hline(14, 5, 7, hi);
+  c.fillCircle(12, 9, 3, cyan);
+  c.px(12, 9, white);
+  c.fillCircle(23, 9, 3, cyan);
+  c.px(23, 9, white);
+  // Wide glowing neon shades visor
+  c.fillRect(15, 8, 7, 3, dark);
+  c.hline(16, 9, 5, gold);
+  c.px(18, 9, white);
+
+  // Holographic sonic keytar / soundwave emitter right side
+  c.fillRect(23, 16, 5, 3, hi);
+  c.fillRect(27, 11, 4, 13, teal);
+  c.vline(28, 12, 11, cyan);
+  c.fillRect(31, 13, 3, 9, mid);
+  c.px(32, 15, gold);
+  c.px(32, 17, white);
+  c.px(32, 19, gold);
+
+  c.addOutline(OUTLINE);
+  return c;
+}
+
+function buildBossCrag(): PixelCanvas {
+  // 44x42 Quarry Breaker Circuit — colossal basalt/magma demolition juggernaut with twin hydraulic pile-driver fists
+  const c = new PixelCanvas(44, 42);
+  const dark = parseHexColor('#292023');
+  const mid = parseHexColor('#6e5c62');
+  const hi = parseHexColor('#bfb0b6');
+  const orange = parseHexColor('#ea580c');
+  const gold = parseHexColor('#facc15');
+  const magma = parseHexColor('#ff4d2d');
+  const white = parseHexColor('#ffffff');
+
+  // Heavy recessed armored dome head with caution crest
+  c.fillRect(15, 4, 14, 8, mid);
+  c.hline(16, 4, 12, hi);
+  c.fillRect(17, 2, 10, 2, orange);
+  c.hline(18, 2, 8, gold);
+  c.fillRect(18, 7, 9, 3, dark);
+  c.hline(19, 8, 7, magma);
+  c.hline(21, 8, 3, gold);
+
+  // Broad monolithic quarry torso + molten core furnace
+  c.fillRect(10, 12, 24, 15, mid);
+  c.hline(11, 12, 22, hi);
+  c.hline(11, 26, 22, dark);
+  c.fillRect(15, 15, 14, 8, dark);
+  c.fillRect(17, 16, 10, 6, orange);
+  c.fillRect(19, 17, 6, 4, gold);
+  c.fillRect(21, 18, 2, 2, white);
+
+  // Towering caution-striped boulder pauldrons
+  c.fillRect(4, 10, 7, 8, orange);
+  c.hline(5, 10, 5, gold);
+  c.hline(5, 14, 5, dark);
+  c.fillRect(33, 10, 7, 8, orange);
+  c.hline(34, 10, 5, gold);
+  c.hline(34, 14, 5, dark);
+
+  // Colossal hydraulic pile-driver fists (left & right)
+  c.fillRect(2, 18, 8, 12, dark);
+  c.fillRect(3, 19, 6, 10, mid);
+  c.vline(4, 19, 10, hi);
+  c.fillRect(3, 27, 6, 3, orange);
+  c.fillRect(34, 18, 8, 12, dark);
+  c.fillRect(35, 19, 6, 10, mid);
+  c.vline(39, 19, 10, hi);
+  c.fillRect(35, 27, 6, 3, orange);
+  c.vline(41, 20, 7, gold);
+
+  // Seismic shock-piston pillar legs
+  c.fillRect(11, 27, 8, 11, dark);
+  c.vline(14, 27, 10, hi);
+  c.fillRect(25, 27, 8, 11, dark);
+  c.vline(28, 27, 10, hi);
+  c.fillRect(9, 36, 11, 4, orange);
+  c.fillRect(24, 36, 11, 4, orange);
+  c.hline(25, 36, 9, gold);
+
+  c.addOutline(OUTLINE);
+  return c;
+}
+
+function buildBossPhantom(): PixelCanvas {
+  // 36x40 Neon Mirage Circuit — shadowy emerald/violet cyber-shinobi with glitch-cloak & twin phase kunai
+  const c = new PixelCanvas(36, 40);
+  const dark = parseHexColor('#0d262b');
+  const mid = parseHexColor('#10b981');
+  const hi = parseHexColor('#a7f3d0');
+  const violet = parseHexColor('#a855f7');
+  const lime = parseHexColor('#d9f99d');
+  const white = parseHexColor('#ffffff');
+
+  // Billowing holographic glitch-cloak & detached data pixels
+  for (let y = 13; y <= 35; y++) {
+    const left = Math.max(2, 13 - Math.floor((y - 12) * 0.5));
+    for (let x = left; x <= 15; x++) {
+      const col = (x * 3 + y) % 7 === 0 ? violet : (x + y) % 4 === 0 ? mid : dark;
+      c.px(x, y, col);
+    }
+  }
+  c.fillRect(3, 12, 2, 2, lime);
+  c.fillRect(2, 24, 2, 2, violet);
+
+  // Stealth shinobi legs
+  c.line(15, 24, 12, 35, dark);
+  c.line(16, 24, 13, 35, mid);
+  c.line(19, 24, 22, 35, mid);
+  c.line(20, 24, 23, 35, hi);
+  c.fillRect(10, 35, 5, 3, violet);
+  c.fillRect(20, 35, 6, 3, violet);
+
+  // Sleek ninja vest torso + violet matrix glyph core
+  c.fillRect(13, 13, 10, 11, dark);
+  c.strokeRect(13, 13, 10, 11, mid);
+  c.fillRect(16, 15, 4, 5, violet);
+  c.fillRect(17, 16, 2, 3, lime);
+  c.hline(13, 22, 10, mid);
+
+  // Horned cyber-shinobi mask & piercing neon lime twin optics
+  c.fillRect(14, 5, 9, 8, dark);
+  c.hline(15, 5, 7, mid);
+  c.line(14, 5, 11, 2, violet);
+  c.line(22, 5, 25, 2, violet);
+  c.fillRect(17, 8, 6, 2, mid);
+  c.px(18, 8, lime);
+  c.px(21, 8, white);
+
+  // Dual glowing phase-daggers (upper & lower right)
+  c.fillRect(22, 16, 5, 3, mid);
+  c.line(26, 16, 34, 10, lime);
+  c.line(27, 17, 34, 11, white);
+  c.line(26, 19, 33, 24, violet);
+  c.line(27, 18, 33, 23, hi);
+
+  c.addOutline(OUTLINE);
+  return c;
+}
+
+function buildBossMirrorRival(): PixelCanvas {
+  // 36x40 Unit K-00 Mirror (Dark Prototype Circuit) — dark crimson Volt mirror doppelgänger with blazing scarf & plasma gauntlet
+  const c = new PixelCanvas(36, 40);
+  const dark = parseHexColor('#3d0a1a');
+  const mid = parseHexColor('#be123c');
+  const hi = parseHexColor('#fda4af');
+  const gold = parseHexColor('#facc15');
+  const violet = parseHexColor('#a855f7');
+  const white = parseHexColor('#ffffff');
+
+  // Whip-like crimson-violet prototype energy scarf trailing left
+  c.line(13, 13, 5, 11, mid);
+  c.line(13, 14, 3, 13, hi);
+  c.line(5, 11, 2, 15, violet);
+  c.line(6, 13, 3, 17, mid);
+
+  // Agile martial-artist stance mirroring Volt
+  c.line(14, 24, 10, 35, dark);
+  c.line(15, 24, 11, 35, dark);
+  c.line(16, 24, 12, 35, mid);
+  c.line(19, 24, 22, 35, mid);
+  c.line(20, 24, 23, 35, mid);
+  c.line(21, 24, 24, 35, hi);
+  c.fillRect(9, 35, 6, 3, mid);
+  c.fillRect(20, 35, 7, 3, mid);
+  c.hline(21, 35, 5, hi);
+  c.fillRect(20, 29, 3, 2, gold);
+
+  // Dark prototype armor torso with fractured golden chest reactor
+  c.fillRect(13, 13, 10, 11, mid);
+  c.hline(14, 13, 8, hi);
+  c.fillRect(12, 12, 12, 2, gold);
+  c.fillRect(16, 15, 4, 4, dark);
+  c.fillRect(17, 16, 2, 2, white);
+  c.hline(14, 22, 8, gold);
+
+  // Prototype Volt-style helmet with sharp twin obsidian horns & blazing white-crimson visor
+  c.fillRect(14, 5, 10, 8, mid);
+  c.hline(15, 5, 8, hi);
+  c.line(15, 5, 12, 1, dark);
+  c.line(16, 5, 13, 1, gold);
+  c.line(21, 5, 24, 1, dark);
+  c.line(22, 5, 25, 1, gold);
+  c.fillRect(17, 8, 7, 3, dark);
+  c.hline(18, 9, 6, white);
+  c.px(18, 9, gold);
+
+  // Overcharged jagged crimson plasma fist extended forward
+  c.fillRect(22, 16, 6, 3, dark);
+  c.fillRect(27, 14, 5, 6, mid);
+  c.fillRect(28, 15, 3, 4, hi);
+  c.line(31, 13, 34, 17, white);
+  c.line(31, 20, 34, 16, gold);
+
+  c.addOutline(OUTLINE);
+  return c;
+}
+
+function buildBossPrismCore(): PixelCanvas {
+  // 52x48 Central Relay Sentinel — towering floating octagonal crystal fortress monolith + twin levitating prism wings
+  const c = new PixelCanvas(52, 48);
+  const dark = parseHexColor('#10234d');
+  const mid = parseHexColor('#2563eb');
+  const cyan = parseHexColor('#38f9ff');
+  const hi = parseHexColor('#e0f2fe');
+  const gold = parseHexColor('#facc15');
+  const red = parseHexColor('#f43f5e');
+  const white = parseHexColor('#ffffff');
+
+  // Outer gyroscopic golden-steel halo rings
+  c.strokeRect(13, 5, 26, 38, gold);
+  c.strokeRect(14, 6, 24, 36, dark);
+  c.fillRect(23, 2, 6, 4, gold);
+  c.fillRect(23, 42, 6, 4, gold);
+
+  // Central faceted crystal monolith core
+  c.fillEllipse(26, 24, 11, 17, mid);
+  c.fillEllipse(25, 22, 8, 13, cyan);
+  c.fillEllipse(24, 19, 4, 8, hi);
+  // Facet bevel lines
+  c.line(18, 14, 34, 34, dark);
+  c.line(34, 14, 18, 34, dark);
+  // Central blazing crimson/gold sentinel eye
+  c.fillCircle(26, 24, 6, dark);
+  c.fillCircle(26, 24, 4, red);
+  c.fillCircle(26, 24, 2, gold);
+  c.px(25, 23, white);
+
+  // Twin levitating mirror-prism wing pylons (left & right)
+  for (const side of [-1, 1]) {
+    const bx = side < 0 ? 5 : 42;
+    c.fillRect(bx, 13, 5, 22, dark);
+    c.fillRect(bx + 1, 14, 3, 20, mid);
+    c.vline(bx + 2, 15, 18, cyan);
+    c.fillRect(bx, 11, 5, 3, gold);
+    c.fillRect(bx, 34, 5, 3, gold);
+    // Emitter lens tips
+    c.fillRect(side < 0 ? 2 : 47, 22, 3, 4, red);
+    c.px(side < 0 ? 2 : 49, 23, white);
+  }
+
+  c.addOutline(OUTLINE);
+  return c;
+}
+
+function buildBossOverlordApex(): PixelCanvas {
+  // 56x52 Corrupt Legion Sovereign — towering final boss with imperial horned crown, forehead reactor, chest core & twin detached floating cyber-gauntlets!
+  const c = new PixelCanvas(56, 52);
+  const dark = parseHexColor('#240c42');
+  const mid = parseHexColor('#6d28d9');
+  const hi = parseHexColor('#c4b5fd');
+  const goldDark = parseHexColor('#b45309');
+  const gold = parseHexColor('#f59e0b');
+  const goldHi = parseHexColor('#fef08a');
+  const crim = parseHexColor('#f43f5e');
+  const white = parseHexColor('#ffffff');
+
+  // Sweeping imperial crimson-gold mantle behind torso
+  c.fillRect(14, 18, 28, 28, dark);
+  c.vline(15, 20, 25, gold);
+  c.vline(40, 20, 25, gold);
+
+  // Imperial horned sovereign crown & sculpted head
+  c.fillRect(19, 6, 18, 12, mid);
+  c.hline(20, 6, 16, hi);
+  // Sweeping golden crown horns
+  c.line(20, 7, 14, 2, gold);
+  c.line(21, 7, 15, 2, goldHi);
+  c.line(35, 7, 41, 2, gold);
+  c.line(34, 7, 40, 2, goldHi);
+  c.fillRect(26, 2, 4, 5, gold);
+  c.hline(27, 2, 2, goldHi);
+  // Blazing forehead reactor eye (Target Part #3)
+  c.fillRect(25, 8, 6, 4, dark);
+  c.fillRect(26, 9, 4, 2, crim);
+  c.px(27, 9, white);
+  // Menacing crimson sovereign visor slit
+  c.fillRect(21, 13, 14, 3, dark);
+  c.hline(22, 14, 12, crim);
+  c.hline(25, 14, 6, goldHi);
+
+  // Broad armored sovereign chestplate & shoulder wings
+  c.fillRect(13, 18, 30, 19, mid);
+  c.hline(14, 18, 28, hi);
+  c.fillRect(11, 17, 6, 6, gold);
+  c.hline(12, 17, 4, goldHi);
+  c.fillRect(39, 17, 6, 6, gold);
+  c.hline(40, 17, 4, goldHi);
+  // Radiant Sovereign Chest Core
+  c.fillRect(22, 22, 12, 10, dark);
+  c.strokeRect(22, 22, 12, 10, gold);
+  c.fillRect(24, 24, 8, 6, crim);
+  c.fillRect(26, 25, 4, 4, goldHi);
+  c.fillRect(27, 26, 2, 2, white);
+
+  // Hovering lower armored greave skirts
+  c.fillRect(16, 37, 9, 11, dark);
+  c.vline(19, 38, 9, mid);
+  c.fillRect(31, 37, 9, 11, dark);
+  c.vline(35, 38, 9, mid);
+  c.hline(16, 46, 9, gold);
+  c.hline(31, 46, 9, gold);
+
+  // Colossal detached floating cyber-gauntlets left & right (Target Parts #1 & #2)
+  for (const gx of [2, 45]) {
+    c.fillRect(gx, 20, 9, 16, goldDark);
+    c.fillRect(gx + 1, 21, 7, 14, gold);
+    c.vline(gx + 2, 22, 12, goldHi);
+    // Glowing crimson knuckle emitters
+    c.fillRect(gx + 1, 33, 7, 4, dark);
+    c.fillRect(gx + 2, 34, 2, 2, crim);
+    c.fillRect(gx + 5, 34, 2, 2, crim);
+    c.px(gx + 2, 34, white);
+    c.px(gx + 5, 34, white);
+  }
+
+  c.addOutline(OUTLINE);
+  return c;
+}
+
+function buildBossSprite(bossId: BossId): PixelCanvas {
+  switch (bossId) {
+    case 'siege_tread':
+      return buildBossSiegeTread();
+    case 'prism':
+      return buildBossPrism();
+    case 'stitch':
+      return buildBossStitch();
+    case 'frostfang':
+      return buildBossFrostfang();
+    case 'arcbolt':
+      return buildBossArcbolt();
+    case 'strider':
+      return buildBossStrider();
+    case 'tempo':
+      return buildBossTempo();
+    case 'crag':
+      return buildBossCrag();
+    case 'phantom':
+      return buildBossPhantom();
+    case 'mirror_rival':
+      return buildBossMirrorRival();
+    case 'prism_core':
+      return buildBossPrismCore();
+    case 'overlord_apex':
+      return buildBossOverlordApex();
+  }
+}
+
 function buildMinibossSprite(id: MinibossId): PixelCanvas {
-  const c = new PixelCanvas(40, 36);
   const dark = parseHexColor('#1e293b');
   const mid = parseHexColor('#475569');
   const hi = parseHexColor('#94a3b8');
-  const acc =
-    id === 'junk_colossus'
-      ? parseHexColor('#ea580c')
-      : id === 'sky_gunship'
-        ? parseHexColor('#0284c7')
-        : parseHexColor('#eab308');
-  const accHi =
-    id === 'junk_colossus'
-      ? parseHexColor('#fdba74')
-      : id === 'sky_gunship'
-        ? parseHexColor('#7dd3fc')
-        : parseHexColor('#fef08a');
   const glow = parseHexColor('#f43f5e');
   const cyan = parseHexColor('#38f9ff');
+  const gold = parseHexColor('#facc15');
   const white = parseHexColor('#f8fafc');
 
   if (id === 'sky_gunship') {
-    // Sleek coaxial armored assault gunship
-    c.fillRect(3, 4, 34, 2, hi);
-    c.hline(12, 3, 16, white);
-    c.fillRect(18, 6, 4, 4, dark);
-    c.fillEllipse(20, 16, 15, 7, acc);
-    c.hline(10, 10, 20, accHi);
-    c.hline(9, 21, 22, dark);
-    // Tail boom & stabilizer
-    c.fillRect(2, 13, 8, 4, mid);
-    c.fillRect(2, 9, 3, 6, acc);
-    // Armored glass cockpit
-    c.fillRect(24, 12, 9, 5, dark);
-    c.hline(25, 13, 7, cyan);
-    c.hline(27, 14, 4, white);
-    // Twin underslung missile pods & rotary turret
-    c.fillRect(11, 22, 16, 5, mid);
-    c.hline(12, 22, 14, hi);
-    c.fillRect(27, 22, 9, 4, dark);
-    c.hline(28, 23, 7, glow);
-    c.px(35, 23, white);
-  } else if (id === 'wrecker_tank') {
-    // Compact heavy assault wrecker tank with treads & mortar turret
-    c.fillRect(11, 4, 16, 8, acc);
-    c.hline(12, 4, 14, accHi);
-    c.fillRect(26, 6, 10, 3, dark);
-    c.hline(27, 6, 8, hi);
-    c.px(35, 7, glow);
-    // Sloped hull
-    c.fillRect(6, 12, 28, 12, mid);
-    c.hline(7, 12, 26, hi);
-    c.fillRect(20, 15, 10, 5, dark);
-    c.hline(22, 17, 7, glow);
-    c.fillRect(8, 15, 6, 6, acc);
-    // Caterpillar tread bed + 4 wheels
-    c.fillRect(4, 24, 32, 9, dark);
-    c.hline(5, 25, 30, mid);
-    for (let i = 0; i < 4; i++) {
-      c.fillCircle(9 + i * 7, 28, 3, mid);
-      c.px(9 + i * 7, 28, accHi);
-    }
-  } else {
-    // Junk Colossus heavy scrap-iron golem mech
-    c.fillRect(13, 3, 14, 8, acc);
-    c.hline(14, 3, 12, accHi);
-    c.fillRect(19, 6, 7, 3, dark);
-    c.hline(20, 7, 5, glow);
-    // Riveted torso & furnace core
-    c.fillRect(8, 11, 24, 14, mid);
-    c.hline(9, 11, 22, hi);
-    c.fillRect(15, 15, 10, 6, dark);
-    c.fillRect(17, 16, 6, 4, acc);
-    c.fillRect(19, 17, 2, 2, white);
-    // Oversized scrap claws
-    c.fillRect(2, 13, 6, 12, acc);
-    c.vline(3, 14, 10, accHi);
-    c.fillRect(32, 13, 6, 12, acc);
-    c.vline(36, 14, 10, accHi);
-    // Heavy piston legs
-    c.fillRect(10, 25, 7, 9, dark);
-    c.vline(12, 25, 8, hi);
-    c.fillRect(23, 25, 7, 9, dark);
-    c.vline(25, 25, 8, hi);
+    // 44x36 Coaxial Armored Assault VTOL Gunship
+    const c = new PixelCanvas(44, 36);
+    const acc = parseHexColor('#0284c7');
+    const accHi = parseHexColor('#7dd3fc');
+    // Twin coaxial rotor blades + mast
+    c.fillRect(3, 3, 38, 2, hi);
+    c.hline(12, 2, 20, white);
+    c.fillRect(20, 5, 4, 4, dark);
+    // Streamlined armored fuselage
+    c.fillEllipse(22, 16, 16, 7, acc);
+    c.hline(11, 10, 22, accHi);
+    c.hline(10, 21, 24, dark);
+    // Tail boom & stabilizer fin
+    c.fillRect(2, 13, 9, 4, mid);
+    c.fillRect(2, 8, 3, 7, acc);
+    c.px(3, 8, glow);
+    // Gleaming armored cyan glass cockpit
+    c.fillRect(26, 12, 10, 5, dark);
+    c.hline(27, 13, 8, cyan);
+    c.hline(29, 14, 5, white);
+    // Twin underslung missile pods & glowing rotary autocannon
+    c.fillRect(11, 22, 17, 6, mid);
+    c.hline(12, 22, 15, hi);
+    c.fillRect(14, 24, 3, 2, gold);
+    c.fillRect(20, 24, 3, 2, gold);
+    c.fillRect(28, 22, 12, 4, dark);
+    c.hline(29, 23, 10, glow);
+    c.px(39, 23, white);
+    c.addOutline(OUTLINE);
+    return c;
   }
+
+  if (id === 'wrecker_tank') {
+    // 44x36 Heavy Siege Wrecker Tank with dorsal mortar, spiked ram plow & 4-wheel treads
+    const c = new PixelCanvas(44, 36);
+    const acc = parseHexColor('#eab308');
+    const accHi = parseHexColor('#fef08a');
+    // Dorsal mortar turret + radar antenna
+    c.fillRect(11, 4, 17, 8, acc);
+    c.hline(12, 4, 15, accHi);
+    c.vline(9, 2, 8, hi);
+    c.px(9, 2, glow);
+    c.fillRect(27, 6, 12, 3, dark);
+    c.hline(28, 6, 10, hi);
+    c.fillRect(37, 6, 2, 3, glow);
+    // Sloped hull & glowing cyclops optic
+    c.fillRect(6, 12, 30, 12, mid);
+    c.hline(7, 12, 28, hi);
+    c.fillRect(21, 15, 11, 5, dark);
+    c.hline(23, 17, 8, glow);
+    c.hline(25, 17, 4, white);
+    c.fillRect(8, 15, 7, 6, acc);
+    c.hline(9, 17, 5, dark);
+    // Spiked front demolition plow
+    c.fillRect(36, 15, 5, 9, acc);
+    c.fillRect(40, 16, 2, 2, white);
+    c.fillRect(40, 21, 2, 2, white);
+    // Caterpillar tread bed + 4 roadwheels
+    c.fillRect(4, 24, 35, 9, dark);
+    c.hline(5, 25, 33, mid);
+    for (let i = 0; i < 4; i++) {
+      c.fillCircle(9 + i * 8, 28, 3, mid);
+      c.px(9 + i * 8, 28, accHi);
+    }
+    c.addOutline(OUTLINE);
+    return c;
+  }
+
+  // 42x38 Junk Colossus heavy scrap-iron foundry golem mech
+  const c = new PixelCanvas(42, 38);
+  const acc = parseHexColor('#ea580c');
+  const accHi = parseHexColor('#fdba74');
+  // Twin smokestacks behind shoulders
+  c.fillRect(9, 2, 3, 8, dark);
+  c.px(10, 2, glow);
+  c.fillRect(30, 2, 3, 8, dark);
+  c.px(31, 2, glow);
+  // Heavy riveted scrap head & blazing crimson eye
+  c.fillRect(14, 4, 14, 8, acc);
+  c.hline(15, 4, 12, accHi);
+  c.fillRect(19, 7, 8, 3, dark);
+  c.hline(20, 8, 6, glow);
+  c.px(23, 8, white);
+  // Riveted furnace torso
+  c.fillRect(9, 12, 24, 14, mid);
+  c.hline(10, 12, 22, hi);
+  c.fillRect(15, 15, 12, 7, dark);
+  c.fillRect(17, 16, 8, 5, acc);
+  c.fillRect(19, 17, 4, 3, gold);
+  c.fillRect(20, 18, 2, 1, white);
+  // Oversized scrap crusher pincers
+  c.fillRect(2, 13, 7, 13, acc);
+  c.vline(3, 14, 11, accHi);
+  c.fillRect(3, 24, 5, 3, hi);
+  c.fillRect(33, 13, 7, 13, acc);
+  c.vline(37, 14, 11, accHi);
+  c.fillRect(34, 24, 5, 3, hi);
+  // Heavy hydraulic legs
+  c.fillRect(11, 26, 7, 10, dark);
+  c.vline(13, 26, 9, hi);
+  c.fillRect(24, 26, 7, 10, dark);
+  c.vline(26, 26, 9, hi);
+  c.fillRect(10, 34, 9, 2, acc);
+  c.fillRect(23, 34, 9, 2, acc);
   c.addOutline(OUTLINE);
   return c;
 }
@@ -2557,6 +3240,380 @@ function buildGlyphCanvas(
 }
 
 // ============================================================================
+// 5B. Equippable Icons: 20 Burst Technique Icons + 20 Booster Chip Icons (12x12)
+// ============================================================================
+
+const BURST_ICON_META: ReadonlyArray<{ readonly id: number; readonly alias: string; readonly color: string; readonly accent: string }> = [
+  { id: 1, alias: 'burst_flying_strike', color: '#38d9ff', accent: '#ffffff' },
+  { id: 2, alias: 'burst_rising_upper', color: '#ff6b4a', accent: '#fef08a' },
+  { id: 3, alias: 'burst_heavenly_piledrive', color: '#ffc83d', accent: '#ffffff' },
+  { id: 4, alias: 'burst_gravity_freeze', color: '#8f7cff', accent: '#e0f2fe' },
+  { id: 5, alias: 'burst_surface_render', color: '#ff8a3d', accent: '#fde047' },
+  { id: 6, alias: 'burst_catch_interrupt', color: '#4de8a4', accent: '#ffffff' },
+  { id: 7, alias: 'burst_screen_interrupt', color: '#ffee55', accent: '#ffffff' },
+  { id: 8, alias: 'burst_cycle_kick', color: '#ff5c8a', accent: '#fbcfe8' },
+  { id: 9, alias: 'burst_clone_array', color: '#7cffcb', accent: '#38f9ff' },
+  { id: 10, alias: 'burst_burst_spark', color: '#52e5ff', accent: '#fef08a' },
+  { id: 11, alias: 'burst_hardware_barrier', color: '#44b8ff', accent: '#e0f2fe' },
+  { id: 12, alias: 'burst_gravity_dash', color: '#c06bff', accent: '#ffffff' },
+  { id: 13, alias: 'burst_function_overload', color: '#ff3b6b', accent: '#fde047' },
+  { id: 14, alias: 'burst_piercing_drill', color: '#ff9e3b', accent: '#ffffff' },
+  { id: 15, alias: 'burst_support_platform', color: '#63e2ff', accent: '#ffffff' },
+  { id: 16, alias: 'burst_hologram_trap', color: '#95ff5c', accent: '#facc15' },
+  { id: 17, alias: 'burst_current_arc', color: '#ffe84d', accent: '#38f9ff' },
+  { id: 18, alias: 'burst_emergency_heal', color: '#4eff91', accent: '#ffffff' },
+  { id: 19, alias: 'burst_distant_detonation', color: '#ff533b', accent: '#fde047' },
+  { id: 20, alias: 'burst_erupting_beam', color: '#ffdf5e', accent: '#ffffff' },
+];
+
+const CHIP_ICON_META: ReadonlyArray<{
+  readonly id: number;
+  readonly alias: string;
+  readonly part: 'circuit' | 'head' | 'body' | 'arms' | 'legs';
+}> = [
+  { id: 1, alias: 'chip_energy_absorber', part: 'circuit' },
+  { id: 2, alias: 'chip_air_jumper', part: 'legs' },
+  { id: 3, alias: 'chip_power_extender', part: 'arms' },
+  { id: 4, alias: 'chip_grip_enhancer', part: 'arms' },
+  { id: 5, alias: 'chip_surge_protector', part: 'body' },
+  { id: 6, alias: 'chip_catch_block', part: 'arms' },
+  { id: 7, alias: 'chip_magnet_chassis', part: 'body' },
+  { id: 8, alias: 'chip_emergency_accumulator', part: 'circuit' },
+  { id: 9, alias: 'chip_underflow_guard', part: 'circuit' },
+  { id: 10, alias: 'chip_energy_multiplier', part: 'circuit' },
+  { id: 11, alias: 'chip_light_alloy', part: 'legs' },
+  { id: 12, alias: 'chip_frame_amplifier', part: 'head' },
+  { id: 13, alias: 'chip_dodge_slider', part: 'legs' },
+  { id: 14, alias: 'chip_speed_basher', part: 'legs' },
+  { id: 15, alias: 'chip_chain_booster', part: 'arms' },
+  { id: 16, alias: 'chip_chain_dasher', part: 'arms' },
+  { id: 17, alias: 'chip_repair_enhancer', part: 'body' },
+  { id: 18, alias: 'chip_nullifying_layer', part: 'body' },
+  { id: 19, alias: 'chip_protection_timer', part: 'head' },
+  { id: 20, alias: 'chip_overflow_converter', part: 'circuit' },
+];
+
+const BURST_ICON_PATTERNS: Readonly<Record<number, readonly string[]>> = {
+  1: [
+    '............',
+    '.....CC.....',
+    '......CC....',
+    '..AAAAACC...',
+    '.ACCCCCCHHC.',
+    '..AAAAACC...',
+    '......CC....',
+    '.....CC.....',
+    '............',
+  ],
+  2: [
+    '.....HH.....',
+    '....HCCH....',
+    '...HCCCCH...',
+    '..CC.CC.CC..',
+    '....CCCC....',
+    '....CAAC....',
+    '....CAAC....',
+    '....CCCC....',
+    '............',
+  ],
+  3: [
+    '....CCCC....',
+    '....CAAC....',
+    '....CCCC....',
+    '..CC.CC.CC..',
+    '...HCCCCH...',
+    '....HCCH....',
+    '.AA..HH..AA.',
+    'AAAA....AAAA',
+    '............',
+  ],
+  4: [
+    '.....CC.....',
+    '..C..HH..C..',
+    '...C.CC.C...',
+    '.CHHCCCCCHH.',
+    '...C.CC.C...',
+    '..C..HH..C..',
+    '.....CC.....',
+    '............',
+    '............',
+  ],
+  5: [
+    '............',
+    '............',
+    '..HH....HH..',
+    '.HCCC..CCCH.',
+    'HCCCCCHCCCCH',
+    'CAACCCCCCAAC',
+    'CCCCCCCCCCCC',
+    '............',
+    '............',
+  ],
+  6: [
+    '....CCCC....',
+    '..CCHHHHCC..',
+    '.CCH.AA.HCC.',
+    '.CC.AAAA.CC.',
+    '.CC..AA..CC.',
+    '..CC.HH.CC..',
+    '...CC..CC...',
+    '....CCCC....',
+    '............',
+  ],
+  7: [
+    '.....HH.....',
+    '..A..CC..A..',
+    '...A.HH.A...',
+    '.HCHHHHHHCH.',
+    '...A.HH.A...',
+    '..A..CC..A..',
+    '.....HH.....',
+    '............',
+    '............',
+  ],
+  8: [
+    '...CCCCCC...',
+    '..CCHHHACC..',
+    '.CC......CC.',
+    '.C..AAAA..C.',
+    '.C..AHHA..C.',
+    '.CC......CC.',
+    '..CCAHHCCC..',
+    '...CCCCCC...',
+    '............',
+  ],
+  9: [
+    '..CC....AA..',
+    '.CHHC..AHHA.',
+    '..CC....AA..',
+    '.CCCC..AAAA.',
+    '.C..C..A..A.',
+    '.C..C..A..A.',
+    '..CC....AA..',
+    '............',
+    '............',
+  ],
+  10: [
+    '....AA......',
+    '....AA......',
+    '.CC....CC...',
+    '.CH.HH.HC...',
+    '....HH......',
+    '.CC....CC...',
+    '....AA......',
+    '....AA......',
+    '............',
+  ],
+  11: [
+    '...CCCCCC...',
+    '..CHHHHHHC..',
+    '.CH......HC.',
+    '.CH.AAAA.HC.',
+    '.CH.AAAA.HC.',
+    '.CH......HC.',
+    '..CHHHHHHC..',
+    '...CCCCCC...',
+    '............',
+  ],
+  12: [
+    '..A....HH...',
+    '...A..HCH...',
+    '....AHCCH...',
+    '.AA.HCCCHH..',
+    '....AHCCH...',
+    '...A..HCH...',
+    '..A....HH...',
+    '............',
+    '............',
+  ],
+  13: [
+    '.....AA.....',
+    '....ACCA....',
+    '...ACCHCA...',
+    '..ACCHHCCA..',
+    '.ACCHHHHCCA.',
+    '..CCCHHCCC..',
+    '...CCCCCC...',
+    '....AAAA....',
+    '............',
+  ],
+  14: [
+    '............',
+    '.CC.........',
+    '.CHCC.......',
+    '.CCHCCC.....',
+    '.CHCHCHHH...',
+    '.CCHCCC.....',
+    '.CHCC.......',
+    '.CC.........',
+    '............',
+  ],
+  15: [
+    '....AAAA....',
+    '.....AA.....',
+    '............',
+    '.HHHHHHHHHH.',
+    '.CCCCCCCCCC.',
+    '..CCCCCCCC..',
+    '...CC..CC...',
+    '............',
+    '............',
+  ],
+  16: [
+    '.....AA.....',
+    '....AAAA....',
+    '...CCCCCC...',
+    '..CCCHHCCC..',
+    '..CCHHHHCC..',
+    '..CCCHHCCC..',
+    '.AA.CCCC.AA.',
+    '............',
+    '............',
+  ],
+  17: [
+    '......HHH...',
+    '.....HCCC...',
+    '....HCC.....',
+    '...HCCCCC...',
+    '.....ACCH...',
+    '....ACC.....',
+    '...ACC......',
+    '..AA........',
+    '............',
+  ],
+  18: [
+    '....CCCC....',
+    '....CHHC....',
+    '..CCCHHCCC..',
+    '..CHHHHHHC..',
+    '..CHHHHHHC..',
+    '..CCCHHCCC..',
+    '....CHHC....',
+    '....CCCC....',
+    '............',
+  ],
+  19: [
+    '.....CC.....',
+    '..CC.HH.CC..',
+    '.C..AAAA..C.',
+    '.C.AAHHAA.C.',
+    '.C.AAHHAA.C.',
+    '.C..AAAA..C.',
+    '..CC.HH.CC..',
+    '.....CC.....',
+    '............',
+  ],
+  20: [
+    '............',
+    '.CC..CCCCCC.',
+    '.CHHCCCCCCCC',
+    '.CHHHHHHHHHH',
+    '.CHHHHHHHHHH',
+    '.CHHCCCCCCCC',
+    '.CC..CCCCCC.',
+    '............',
+    '............',
+  ],
+};
+
+const CHIP_GLYPH_PATTERNS: Readonly<Record<number, readonly string[]>> = {
+  1: ['..H..H..', '.H.AA.H.', '..AAAA..', '.H.AA.H.', '..H..H..'],
+  2: ['...HH...', '..H..H..', '...AA...', '..A..A..', '.A....A.'],
+  3: ['..AA....', '..AAHH..', '..AAHHH.', '..AAHH..', '..AA....'],
+  4: ['.HH..AA.', '.H..AAA.', '.HH..AA.', '.H..AAA.', '.HH.....'],
+  5: ['..HHHH..', '.H.AA.H.', '.H.AA.H.', '..HAAH..', '...HH...'],
+  6: ['.HH.....', '.HH.AAA.', '.HH.A.A.', '.HH.AAA.', '.HH.....'],
+  7: ['.HH..HH.', '.H....H.', '.A....A.', '.AA..AA.', '..AAAA..'],
+  8: ['..AAAA..', '.A.HH.A.', '.A.HH.A.', '.A....A.', '..AAAA..'],
+  9: ['.HH..HH.', 'HHHHHHHH', '.H.AA.H.', '..HAAH..', '...HH...'],
+  10: ['.H.H..A.', '..H..AAA', '.H.H..A.', '........', '..HHHH..'],
+  11: ['....HHH.', '...HAA..', '..HAA...', '.HAA....', '.H......'],
+  12: ['..HHHH..', '.HAAAAH.', '.H.HH.H.', '..HHHH..', '...AA...'],
+  13: ['........', '...HHHH.', '..AAAAH.', '.HHHH...', '........'],
+  14: ['.A..HH..', '..A.HHH.', 'AA..HHHH', '..A.HHH.', '.A..HH..'],
+  15: ['.HH..HH.', 'H..AA..H', 'H..AA..H', '.HH..HH.', '........'],
+  16: ['....HHH.', '...HAA..', '..HH....', '.AAH....', 'HH......'],
+  17: ['...HH...', '...HH...', '.HHHHHH.', '...HH...', '...HH...'],
+  18: ['..HHHH..', '.H....H.', '.H.AA.H.', '.H....H.', '..HHHH..'],
+  19: ['.HHHHHH.', '..HAAH..', '...HH...', '..HAAH..', '.HHHHHH.'],
+  20: ['.HH..A..', '.HH.AAA.', '....A.A.', '..AA....', '..A.....'],
+};
+
+function buildEquippableIcons(): {
+  readonly sprites: Record<string, PixelCanvas>;
+  readonly aliases: Record<string, string>;
+} {
+  const sprites: Record<string, PixelCanvas> = {};
+  const aliases: Record<string, string> = {};
+
+  const bgDark = parseHexColor('#10182b');
+  const bgFrame = parseHexColor('#2a3b5c');
+  const goldPin = parseHexColor('#facc15');
+  const white = parseHexColor('#ffffff');
+
+  const partColors: Record<'circuit' | 'head' | 'body' | 'arms' | 'legs', { mid: RGBA; acc: RGBA }> = {
+    circuit: { mid: parseHexColor('#0284c7'), acc: parseHexColor('#38f9ff') },
+    head: { mid: parseHexColor('#7c3aed'), acc: parseHexColor('#c4b5fd') },
+    body: { mid: parseHexColor('#15803d'), acc: parseHexColor('#4ade80') },
+    arms: { mid: parseHexColor('#c2410c'), acc: parseHexColor('#fbbf24') },
+    legs: { mid: parseHexColor('#0d9488'), acc: parseHexColor('#5eead4') },
+  };
+
+  // 20 Burst Technique 12x12 pixel icons
+  for (const meta of BURST_ICON_META) {
+    const c = new PixelCanvas(12, 12);
+    const col = parseHexColor(meta.color);
+    const acc = parseHexColor(meta.accent);
+    const hi = mixRgba(col, white, 0.55);
+
+    // Subtle dark beveled square medallion backing
+    c.fillRect(1, 1, 10, 10, bgDark);
+    c.strokeRect(1, 1, 10, 10, mixRgba(bgFrame, col, 0.45));
+    c.strokeRect(0, 0, 12, 12, OUTLINE);
+
+    const grid = BURST_ICON_PATTERNS[meta.id] ?? BURST_ICON_PATTERNS[1];
+    c.paintGrid(grid, { C: col, A: acc, H: hi }, 0, 2);
+
+    const key = `icon_burst_${meta.id}`;
+    sprites[key] = c;
+    aliases[meta.alias] = key;
+  }
+
+  // 20 Booster Chip 12x12 pixel icons (microchip PCB with gold connector pins)
+  for (const meta of CHIP_ICON_META) {
+    const c = new PixelCanvas(12, 12);
+    const pc = partColors[meta.part];
+
+    // Gold top & bottom chip connector pins
+    for (const px of [3, 5, 7, 9]) {
+      c.px(px, 0, OUTLINE);
+      c.px(px, 1, goldPin);
+      c.px(px, 10, goldPin);
+      c.px(px, 11, OUTLINE);
+    }
+    // Chip ceramic die body
+    c.fillRect(1, 2, 10, 8, bgDark);
+    c.strokeRect(1, 2, 10, 8, pc.mid);
+    c.hline(2, 2, 8, pc.acc);
+    c.strokeRect(0, 1, 12, 10, OUTLINE);
+    // Re-stamp bright gold edge pins on top/bottom border
+    for (const px of [3, 5, 7, 9]) {
+      c.px(px, 1, goldPin);
+      c.px(px, 10, goldPin);
+    }
+
+    const glyph = CHIP_GLYPH_PATTERNS[meta.id] ?? CHIP_GLYPH_PATTERNS[1];
+    c.paintGrid(glyph, { H: white, A: pc.acc }, 2, 4);
+
+    const key = `icon_chip_${meta.id}`;
+    sprites[key] = c;
+    aliases[meta.alias] = key;
+  }
+
+  return { sprites, aliases };
+}
+
+// ============================================================================
 // Shelf Atlas Packer (1px Transparent Gutter, Power-of-Two Dimensions)
 // ============================================================================
 
@@ -2575,11 +3632,11 @@ function packSprites(items: readonly PendingSprite[]): {
   sheet: PixelSurface;
   regions: Map<string, AtlasRegion>;
 } {
-  // Sort tallest first for compact shelf packing
+  // Sort tallest first for compact shelf packing with zero cramp inside 1024x1024 ceiling
   const sorted = [...items].sort((a, b) => b.canvas.height - a.canvas.height || b.canvas.width - a.canvas.width);
 
   const padding = 1;
-  const maxWidth = 512;
+  const maxWidth = 1024;
 
   let curX = padding;
   let curY = padding;
@@ -2635,7 +3692,9 @@ const ENEMY_FAMILIES: readonly EnemyFamily[] = [
   'dummy',
 ];
 
-const GENERIC_BOSS_IDS: readonly Exclude<BossId, 'siege_tread' | 'prism'>[] = [
+const ALL_BOSS_IDS: readonly BossId[] = [
+  'siege_tread',
+  'prism',
   'stitch',
   'frostfang',
   'arcbolt',
@@ -2677,7 +3736,7 @@ export class ProceduralPixelAtlas {
     items.push({ key: 'aim_reticle', canvas: buildAimReticle() });
     aliases.set('hookshot', 'hook_tip');
 
-    // 3. 16x16 Biome tilesets for all 15 StageIds & all non-empty TileTypes
+    // 3. 16x16 Bespoke Biome tilesets for all 15 StageIds & all non-empty TileTypes
     for (const stageId of OFFICIAL_STAGE_IDS) {
       for (const tileType of SOLID_TILE_TYPES) {
         items.push({
@@ -2694,11 +3753,9 @@ export class ProceduralPixelAtlas {
       aliases.set(family, key);
     }
 
-    // 5. Bosses (bespoke Siege Tread & Prism + all 10 other bosses) & Minibosses
-    items.push({ key: 'boss_siege_tread', canvas: buildBossSiegeTread() });
-    items.push({ key: 'boss_prism', canvas: buildBossPrism() });
-    for (const bossId of GENERIC_BOSS_IDS) {
-      items.push({ key: `boss_${bossId}`, canvas: buildGenericBossVariant(bossId) });
+    // 5. All 12 Bespoke Bosses & 3 Minibosses
+    for (const bossId of ALL_BOSS_IDS) {
+      items.push({ key: `boss_${bossId}`, canvas: buildBossSprite(bossId) });
     }
     for (const mbId of MINIBOSS_IDS) {
       items.push({ key: `miniboss_${mbId}`, canvas: buildMinibossSprite(mbId) });
@@ -2711,7 +3768,16 @@ export class ProceduralPixelAtlas {
     }
     aliases.set('rescue', 'rescue_bot');
 
-    // 7. Outlined 6x8 BitmapFontAtlas glyphs (ASCII 32..126)
+    // 7. Equippable Icons (icon_burst_1..20 & icon_chip_1..20, 12x12) + data key aliases
+    const equippableIcons = buildEquippableIcons();
+    for (const [key, canvas] of Object.entries(equippableIcons.sprites)) {
+      items.push({ key, canvas });
+    }
+    for (const [alias, target] of Object.entries(equippableIcons.aliases)) {
+      aliases.set(alias, target);
+    }
+
+    // 8. Outlined 6x8 BitmapFontAtlas glyphs (ASCII 32..126)
     for (let code = 32; code <= 126; code++) {
       items.push({ key: `font_${code}`, canvas: buildGlyphCanvas(code) });
     }
