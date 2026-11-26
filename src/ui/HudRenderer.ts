@@ -241,12 +241,12 @@ export class HudRenderer {
     const panelH = rows === 2 ? 29 : 23;
 
     // Dark translucent pixel panel
-    target.fillRect(6, 6, panelW, panelH, '#090d18', 0.84);
+    target.fillRect(6, 6, panelW, panelH, '#090d18', 0.9);
     const borderColor = overload
       ? '#ffd166'
       : lowHp && (state.tick & 8) !== 0
         ? '#ff3b5c'
-        : '#35507a';
+        : '#5584c4';
     this.drawBorder(target, 6, 6, panelW, panelH, borderColor);
 
     // Mini Volt armor emblem swatch (12x12)
@@ -356,18 +356,18 @@ export class HudRenderer {
     const bitsText = `B:${bits}`;
 
     const infoStr = `${bitsText} ${rescueText} ${loadoutText}`;
-    const infoW = measurePixelText(infoStr) + 14;
+    const infoW = measurePixelText(infoStr) + 20;
     const infoX = rightX - infoW;
 
-    target.fillRect(infoX, 19, infoW, 11, '#090d18', 0.82);
-    this.drawBorder(target, infoX, 19, infoW, 11, '#2b3e63');
+    target.fillRect(infoX, 19, infoW, 11, '#090d18', 0.88);
+    this.drawBorder(target, infoX, 19, infoW, 11, '#4b74b2');
 
     // Gold bit diamond icon
     target.fillRect(infoX + 4, 22, 3, 5, '#ffd166', 1);
     target.fillRect(infoX + 3, 23, 5, 3, '#ffd166', 1);
     target.fillRect(infoX + 4, 23, 1, 1, '#ffffff', 1);
 
-    // Loadout armor swatch dot
+    // Loadout armor swatch dot (spaced cleanly after [1/3])
     target.fillRect(infoX + infoW - 5, 22, 2, 5, activePalette[4], 1);
 
     drawPixelText(target, infoStr, infoX + 10, 21, '#eef5ff', 1, '#090c14');

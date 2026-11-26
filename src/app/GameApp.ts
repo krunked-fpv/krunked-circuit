@@ -96,6 +96,7 @@ export class GameApp {
   private fpsWindowStart = 0;
   private measuredFps = 60;
   private disposed = false;
+  private qaGamepadSimActive = false;
 
   private readonly handleUnlockGesture = (): void => {
     this.audio.unlock();
@@ -254,11 +255,13 @@ export class GameApp {
         onUpdateRenderSettings: (partial) => {
           this.renderSettings = { ...this.renderSettings, ...partial };
           this.persistSave();
+          this.syncMenusNow();
         },
         onUpdateAudioSettings: (partial) => {
           this.audioSettings = { ...this.audioSettings, ...partial };
           this.audio.setSettings(this.audioSettings);
           this.persistSave();
+          this.syncMenusNow();
         },
         onUpdateControls: (partial) => {
           this.controls = {
@@ -270,12 +273,14 @@ export class GameApp {
           };
           this.input.setBindings(this.controls);
           this.persistSave();
+          this.syncMenusNow();
         },
         onStartKeyCapture: (action, onCaptured) => {
           this.input.startKeyCapture(action, (code) => {
             this.controls = this.input.getBindings();
             this.persistSave();
             onCaptured(code);
+            this.syncMenusNow();
           });
         },
         onResetControls: () => {
@@ -283,6 +288,7 @@ export class GameApp {
           this.controls = this.input.getBindings();
           this.persistSave();
           this.menus.showToast('CONTROLS RESET TO DEFAULT', 'info');
+          this.syncMenusNow();
         },
         onToggleAssetMode: async (mode) => {
           await this.setAssetMode(mode);
@@ -334,6 +340,39 @@ export class GameApp {
       },
       onSetAssetMode: (mode) => {
         void this.setAssetMode(mode);
+      },
+      onTestTouchOverlay: () => {
+        const touch = this.input.getTouchOverlay();
+        const next = !touch.isVisible();
+        if (next) {
+          this.qaGamepadSimActive = false;
+          this.input.setSimulatedGamepad(null);
+          touch.setVisible(true);
+          if (typeof window !== 'undefined' && typeof PointerEvent !== 'undefined') {
+            window.dispatchEvent(new PointerEvent('pointerdown', { pointerType: 'touch', pointerId: 99, bubbles: true }));
+          }
+          this.menus.showToast('TOUCH OVERLAY ACTIVATED (PRESS ANY KEY TO HIDE)', 'info');
+        } else {
+          touch.setVisible(false);
+          this.menus.showToast('TOUCH OVERLAY HIDDEN', 'info');
+        }
+        this.syncMenusNow();
+      },
+      onTestXboxGamepad: () => {
+        this.qaGamepadSimActive = !this.qaGamepadSimActive;
+        if (this.qaGamepadSimActive) {
+          this.input.setSimulatedGamepad({
+            id: 'Xbox Wireless Controller (STANDARD GAMEPAD)',
+            connected: true,
+            axes: [0.65, 0, 0, 0],
+            buttons: [0, 0, 0, 0, 0, 0, 0, 0.85, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+          });
+          this.menus.showToast('XBOX/TESLA GAMEPAD SIM ACTIVE', 'unlock');
+        } else {
+          this.input.setSimulatedGamepad(null);
+          this.menus.showToast('XBOX/TESLA GAMEPAD SIM CLEARED', 'info');
+        }
+        this.syncMenusNow();
       },
       getDiagnostics: () => ({
         fps: this.measuredFps,
@@ -528,6 +567,23 @@ export class GameApp {
     } catch {
       // Ignore fullscreen denial
     }
+  }
+
+  private syncMenusNow(): void {
+    this.menus.sync({
+      screen: this.state.screen,
+      activeHubTerminal: this.state.activeHubTerminal,
+      progression: this.state.progression,
+      stageStats: this.state.stageStats,
+      renderSettings: this.renderSettings,
+      audioSettings: this.audioSettings,
+      controls: this.controls,
+      modality: this.input.getModality(),
+      gamepadName: this.input.getGamepadAdapter().getConnectedGamepadName(),
+      hasSave: this.hasExistingSave,
+      customPackAvailable: this.assets.isCustomPackAvailable(),
+      touchVisible: this.input.getTouchOverlayState().visible,
+    });
   }
 
   private persistSave(): void {

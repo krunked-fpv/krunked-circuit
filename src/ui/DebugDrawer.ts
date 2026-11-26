@@ -40,6 +40,8 @@ export interface DebugDrawerCallbacks {
   onUnlockAll: () => void;
   onEquipArmor: (armorId: ArmorPaintId) => void;
   onSetAssetMode?: (mode: AssetMode) => void;
+  onTestTouchOverlay?: () => void;
+  onTestXboxGamepad?: () => void;
   getDiagnostics: () => DebugDiagnostics;
 }
 
@@ -126,12 +128,14 @@ export class DebugDrawer {
       </div>
 
       <div class="kc-debug-section">
-        <label class="kc-debug-label">Quick Cheats</label>
+        <label class="kc-debug-label">Quick Cheats &amp; Input QA</label>
         <div class="kc-debug-grid2">
           <button type="button" class="kc-btn-xs" data-dbg="warp-boss">WARP BOSS</button>
           <button type="button" class="kc-btn-xs" data-dbg="heal">HEAL FULL</button>
           <button type="button" class="kc-btn-xs" data-dbg="burst">FULL BURST</button>
           <button type="button" class="kc-btn-xs" data-dbg="unlock-all">UNLOCK ALL</button>
+          <button type="button" class="kc-btn-xs" data-dbg="test-touch">TEST TOUCH UI</button>
+          <button type="button" class="kc-btn-xs" data-dbg="test-pad">TEST XBOX PAD</button>
         </div>
       </div>
 
@@ -169,6 +173,14 @@ export class DebugDrawer {
     });
     root.querySelector('[data-dbg="unlock-all"]')?.addEventListener('click', () => {
       this.callbacks.onUnlockAll();
+      this.refreshTelemetry();
+    });
+    root.querySelector('[data-dbg="test-touch"]')?.addEventListener('click', () => {
+      this.callbacks.onTestTouchOverlay?.();
+      this.refreshTelemetry();
+    });
+    root.querySelector('[data-dbg="test-pad"]')?.addEventListener('click', () => {
+      this.callbacks.onTestXboxGamepad?.();
       this.refreshTelemetry();
     });
 

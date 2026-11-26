@@ -778,8 +778,8 @@ export function updateBoss(state: SimState, cb: BossSimCallbacks): void {
     if (inBossCell) {
       boss.active = true;
       boss.aiState = 'intro';
-      boss.aiTimer = 75;
-      boss.invulnTimer = 75;
+      boss.aiTimer = 90;
+      boss.invulnTimer = 90;
       boss.facing = pCx >= boss.x ? 1 : -1;
       state.camera.lockedBossArena = true;
       state.camera.targetX = cellLeft;
