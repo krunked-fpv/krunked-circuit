@@ -1,0 +1,276 @@
+import type { BurstDefinition, BurstId } from '../contracts/index';
+
+export const BURST_DEFINITIONS: readonly BurstDefinition[] = [
+  {
+    id: 1,
+    key: 'flying_strike',
+    name: 'Flying Strike',
+    description:
+      'Launches Volt forward in a blazing horizontal circuit lunge that pierces enemies and shatters frontal guards.',
+    costCharges: 1,
+    baseDamage: 5,
+    priceBits: 0,
+    iconKey: 'burst_flying_strike',
+    color: '#38d9ff',
+    starter: true,
+  },
+  {
+    id: 2,
+    key: 'rising_upper',
+    name: 'Rising Upper',
+    description:
+      'Explosive vertical uppercut launching Volt and nearby targets skyward with heavy armor-breaking force.',
+    costCharges: 1,
+    baseDamage: 5,
+    priceBits: 0,
+    iconKey: 'burst_rising_upper',
+    color: '#ff6b4a',
+    starter: true,
+  },
+  {
+    id: 3,
+    key: 'heavenly_piledrive',
+    name: 'Heavenly Piledrive',
+    description:
+      'Slams downward with crushing kinetic energy, unleashing twin shockwaves upon hitting the ground.',
+    costCharges: 1,
+    baseDamage: 6,
+    priceBits: 0,
+    iconKey: 'burst_heavenly_piledrive',
+    color: '#ffc83d',
+    starter: true,
+  },
+  {
+    id: 4,
+    key: 'gravity_freeze',
+    name: 'Gravity Freeze',
+    description:
+      'Projects a temporal disruption field that halts nearby enemies and projectiles for rapid counterattacks.',
+    costCharges: 1,
+    baseDamage: 2,
+    priceBits: 0,
+    iconKey: 'burst_gravity_freeze',
+    color: '#8f7cff',
+    starter: true,
+  },
+  {
+    id: 5,
+    key: 'surface_render',
+    name: 'Surface Render',
+    description:
+      'Sends twin ground-hugging plasma waves surging across terrain and climbing short ledges.',
+    costCharges: 1,
+    baseDamage: 5,
+    priceBits: 120,
+    unlockStage: 'opening',
+    iconKey: 'burst_surface_render',
+    color: '#ff8a3d',
+  },
+  {
+    id: 6,
+    key: 'catch_interrupt',
+    name: 'Catch Interrupt',
+    description:
+      'Enters a reactive counter stance that intercepts incoming hits and retaliates with a point-blank pulse.',
+    costCharges: 1,
+    baseDamage: 7,
+    priceBits: 150,
+    unlockStage: 'opening',
+    iconKey: 'burst_catch_interrupt',
+    color: '#4de8a4',
+  },
+  {
+    id: 7,
+    key: 'screen_interrupt',
+    name: 'Screen Interrupt',
+    description:
+      'Triggers a full-viewport kinetic shockwave that clears enemy projectiles and damages every foe on screen.',
+    costCharges: 2,
+    baseDamage: 6,
+    priceBits: 260,
+    unlockStage: 'optic',
+    iconKey: 'burst_screen_interrupt',
+    color: '#ffee55',
+  },
+  {
+    id: 8,
+    key: 'cycle_kick',
+    name: 'Cycle Kick',
+    description:
+      'Spins rapidly in a multi-hit whirlwind kick that lifts Volt briefly and shreds clustered drones.',
+    costCharges: 1,
+    baseDamage: 5,
+    priceBits: 140,
+    unlockStage: 'shift',
+    iconKey: 'burst_cycle_kick',
+    color: '#ff5c8a',
+  },
+  {
+    id: 9,
+    key: 'clone_array',
+    name: 'Clone Array',
+    description:
+      'Manifests a synchronized photonic afterimage that echoes Volt melee strikes for extra damage.',
+    costCharges: 2,
+    baseDamage: 3,
+    priceBits: 280,
+    unlockStage: 'cipher',
+    iconKey: 'burst_clone_array',
+    color: '#7cffcb',
+  },
+  {
+    id: 10,
+    key: 'burst_spark',
+    name: 'Burst Spark',
+    description:
+      'Discharges a radial ring of electric spheres around Volt, stunning nearby foes for immediate hookshot grabs.',
+    costCharges: 1,
+    baseDamage: 4,
+    priceBits: 160,
+    unlockStage: 'elec',
+    iconKey: 'burst_burst_spark',
+    color: '#52e5ff',
+  },
+  {
+    id: 11,
+    key: 'hardware_barrier',
+    name: 'Hardware Barrier',
+    description:
+      'Generates a rotating hex-shield around Unit K-01 that absorbs up to 3 hits and damages enemies on contact.',
+    costCharges: 2,
+    baseDamage: 3,
+    priceBits: 240,
+    unlockStage: 'patch',
+    iconKey: 'burst_hardware_barrier',
+    color: '#44b8ff',
+  },
+  {
+    id: 12,
+    key: 'gravity_dash',
+    name: 'Gravity Dash',
+    description:
+      'Warps instantaneously in any of 8 directions, passing cleanly through hazards while slicing foes in path.',
+    costCharges: 1,
+    baseDamage: 4,
+    priceBits: 180,
+    unlockStage: 'shift',
+    iconKey: 'burst_gravity_dash',
+    color: '#c06bff',
+  },
+  {
+    id: 13,
+    key: 'function_overload',
+    name: 'Function Overload',
+    description:
+      'Overclocks Volt chassis for 400 ticks: boosts walk to 3.0, sprint to 5.0, and multiplies melee power by 1.4x.',
+    costCharges: 2,
+    baseDamage: 0,
+    priceBits: 320,
+    unlockStage: 'wave',
+    iconKey: 'burst_function_overload',
+    color: '#ff3b6b',
+  },
+  {
+    id: 14,
+    key: 'piercing_drill',
+    name: 'Piercing Drill',
+    description:
+      'Drives a spiraling kinetic auger straight forward, boring through shields, armored enemies, and breakable stone.',
+    costCharges: 1,
+    baseDamage: 6,
+    priceBits: 190,
+    unlockStage: 'break',
+    iconKey: 'burst_piercing_drill',
+    color: '#ff9e3b',
+  },
+  {
+    id: 15,
+    key: 'support_platform',
+    name: 'Support Platform',
+    description:
+      'Deploys a solid hard-light step beneath Volt that can be stood on, wall-jumped off, or grabbed and thrown.',
+    costCharges: 1,
+    baseDamage: 3,
+    priceBits: 150,
+    unlockStage: 'patch',
+    iconKey: 'burst_support_platform',
+    color: '#63e2ff',
+  },
+  {
+    id: 16,
+    key: 'hologram_trap',
+    name: 'Hologram Trap',
+    description:
+      'Places a proximity energy mine that detonates in a heavy concussive blast when any enemy draws near.',
+    costCharges: 1,
+    baseDamage: 6,
+    priceBits: 170,
+    unlockStage: 'cipher',
+    iconKey: 'burst_hologram_trap',
+    color: '#95ff5c',
+  },
+  {
+    id: 17,
+    key: 'current_arc',
+    name: 'Current Arc',
+    description:
+      'Fires a chaining high-voltage lightning bolt that arcs between multiple nearby enemies in sequence.',
+    costCharges: 1,
+    baseDamage: 5,
+    priceBits: 200,
+    unlockStage: 'elec',
+    iconKey: 'burst_current_arc',
+    color: '#ffe84d',
+  },
+  {
+    id: 18,
+    key: 'emergency_heal',
+    name: 'Emergency Heal',
+    description:
+      'Converts stored Burst Energy into emergency nanite repair, immediately restoring 6 HP to Unit K-01.',
+    costCharges: 2,
+    baseDamage: 0,
+    priceBits: 250,
+    unlockStage: 'cooler',
+    iconKey: 'burst_emergency_heal',
+    color: '#4eff91',
+  },
+  {
+    id: 19,
+    key: 'distant_detonation',
+    name: 'Distant Detonation',
+    description:
+      'Tags the last struck or grappled foe with an unstable relay charge, then triggers a massive remote explosion.',
+    costCharges: 1,
+    baseDamage: 7,
+    priceBits: 210,
+    unlockStage: 'break',
+    iconKey: 'burst_distant_detonation',
+    color: '#ff533b',
+  },
+  {
+    id: 20,
+    key: 'erupting_beam',
+    name: 'Erupting Beam',
+    description:
+      'Unleashes a towering twin-charge solar plasma beam across the entire arena, vaporizing shields and armor.',
+    costCharges: 2,
+    baseDamage: 9,
+    priceBits: 350,
+    unlockStage: 'optic',
+    iconKey: 'burst_erupting_beam',
+    color: '#ffdf5e',
+  },
+] as const;
+
+export const BURST_MAP: Readonly<Record<BurstId, BurstDefinition>> = BURST_DEFINITIONS.reduce(
+  (acc, item) => {
+    acc[item.id] = item;
+    return acc;
+  },
+  {} as Record<BurstId, BurstDefinition>,
+);
+
+export function getBurstDefinition(id: BurstId): BurstDefinition {
+  return BURST_MAP[id];
+}
