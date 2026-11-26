@@ -1,5 +1,9 @@
 # Krunked Circuit
 
+[![Krunked Circuit CI & Deploy Pages](https://github.com/krunked-fpv/krunked-circuit/actions/workflows/ci.yml/badge.svg)](https://github.com/krunked-fpv/krunked-circuit/actions/workflows/ci.yml)
+
+**Play Live:** https://krunked-fpv.github.io/krunked-circuit/
+
 A standalone, 60 Hz TypeScript + WebGL2 + Web Audio action-platformer built for crisp 400×240 pixel-art combat, 8-directional hookshot grappling and grab-throw chain combos, 20 Burst Techniques, 20 Booster Chips, 12 functional Armor Paints, 15 stages (+12 Master Remix layouts), 12 multi-phase bosses, 3 minibosses, 42 enemy archetypes, Boss Rush, and dual-mode Built-In / Owned Custom Pack rendering.
 
 ## Features
