@@ -1,6 +1,9 @@
 import type { ChallengeDefinition } from '../contracts/index';
 
 export const CHALLENGE_DEFINITIONS: readonly ChallengeDefinition[] = [
+  // ==========================================================================
+  // Wave 1 Core Challenges (1..16 — IDs preserved)
+  // ==========================================================================
   {
     id: 'chal_first_clear',
     index: 1,
@@ -128,6 +131,322 @@ export const CHALLENGE_DEFINITIONS: readonly ChallengeDefinition[] = [
     description: 'Build a 10-hit melee and Burst combo inside combat or the Dojo.',
     category: 'combat',
     rewardBits: 120,
+  },
+
+  // ==========================================================================
+  // Remaining 10 Boss Showdowns & Miniboss Feats (17..29)
+  // ==========================================================================
+  {
+    id: 'chal_boss_stitch',
+    index: 17,
+    name: 'Seam Ripper',
+    description: 'Defeat Stitch and reclaim the Scrap Forge Foundry.',
+    category: 'boss',
+    rewardBits: 150,
+  },
+  {
+    id: 'chal_boss_frostfang',
+    index: 18,
+    name: 'Thermal Meltdown',
+    description: 'Defeat Frostfang and stabilize the Cryo Conduit Vault.',
+    category: 'boss',
+    rewardBits: 150,
+  },
+  {
+    id: 'chal_boss_arcbolt',
+    index: 19,
+    name: 'Grounded Current',
+    description: 'Defeat Arcbolt and shut down the Surge Station.',
+    category: 'boss',
+    rewardBits: 150,
+  },
+  {
+    id: 'chal_boss_strider',
+    index: 20,
+    name: 'Airspace Cleared',
+    description: 'Defeat Strider aboard the Skyway Freighter Convoy.',
+    category: 'boss',
+    rewardBits: 150,
+  },
+  {
+    id: 'chal_boss_tempo',
+    index: 21,
+    name: 'Off the Record',
+    description: 'Defeat Tempo and silence the Neon Pulse Array.',
+    category: 'boss',
+    rewardBits: 150,
+  },
+  {
+    id: 'chal_boss_crag',
+    index: 22,
+    name: 'Bedrock Shattered',
+    description: 'Defeat Crag inside the Deep Basalt Quarry.',
+    category: 'boss',
+    rewardBits: 150,
+  },
+  {
+    id: 'chal_boss_phantom',
+    index: 23,
+    name: 'Firewall Breached',
+    description: 'Defeat Phantom and purge the Cipher Matrix.',
+    category: 'boss',
+    rewardBits: 150,
+  },
+  {
+    id: 'chal_boss_mirror',
+    index: 24,
+    name: 'Shattered Reflection',
+    description: 'Best Unit K-00 Mirror in a duel at the Citadel Gates.',
+    category: 'boss',
+    rewardBits: 220,
+  },
+  {
+    id: 'chal_boss_prism_core',
+    index: 25,
+    name: 'Spectrum Severed',
+    description: 'Destroy Prism Core deep inside the Central Core Reactor.',
+    category: 'boss',
+    rewardBits: 250,
+  },
+  {
+    id: 'chal_boss_overlord',
+    index: 26,
+    name: 'Apex Dethroned',
+    description: 'Defeat Overlord Apex atop the Orbital Spire to liberate the grid.',
+    category: 'boss',
+    rewardBits: 350,
+  },
+  {
+    id: 'chal_miniboss_trio',
+    index: 27,
+    name: 'Heavy Hardware',
+    description: 'Dismantle all three Legion minibosses: Junk Colossus, Sky Gunship, and Wrecker Tank.',
+    category: 'boss',
+    rewardBits: 220,
+  },
+  {
+    id: 'chal_mirror_no_burst',
+    index: 28,
+    name: 'Pure Martial Circuit',
+    description: 'Defeat Unit K-00 Mirror using only melee strikes and hookshot throws without Burst Arts.',
+    category: 'boss',
+    rewardBits: 280,
+  },
+  {
+    id: 'chal_overlord_parts',
+    index: 29,
+    name: 'Disarmed Sovereign',
+    description: 'Shatter both armored hands of Overlord Apex before finishing its Eye Core.',
+    category: 'boss',
+    rewardBits: 300,
+  },
+
+  // ==========================================================================
+  // Combat, Hookshot & Burst Technique Mastery (30..35)
+  // ==========================================================================
+  {
+    id: 'chal_shield_snatch',
+    index: 30,
+    name: 'Return to Sender',
+    description: 'Break a vanguard shield, snatch it with the hookshot, and hurl it into a foe.',
+    category: 'combat',
+    rewardBits: 140,
+  },
+  {
+    id: 'chal_air_snag',
+    index: 31,
+    name: 'Skyline Grapple',
+    description: 'Snag a stunned airborne drone with the hookshot and slam it into another enemy.',
+    category: 'combat',
+    rewardBits: 140,
+  },
+  {
+    id: 'chal_barrel_cascade',
+    index: 32,
+    name: 'Demolition Chain',
+    description: 'Defeat three enemies with a single thrown volatile barrel detonation.',
+    category: 'combat',
+    rewardBits: 150,
+  },
+  {
+    id: 'chal_overload_fury',
+    index: 33,
+    name: 'Maximum Overclock',
+    description: 'Eliminate five Legion units during a single Function Overload activation.',
+    category: 'combat',
+    rewardBits: 160,
+  },
+  {
+    id: 'chal_freeze_shatter',
+    index: 34,
+    name: 'Zero-Time Takedown',
+    description: 'Halt four foes inside Gravity Freeze and clear them before time resumes.',
+    category: 'combat',
+    rewardBits: 160,
+  },
+  {
+    id: 'chal_catch_counter',
+    index: 35,
+    name: 'Perfect Redirect',
+    description: 'Deflect an enemy or boss projectile back at its sender using Catch Interrupt.',
+    category: 'combat',
+    rewardBits: 170,
+  },
+
+  // ==========================================================================
+  // Movement, Hookshot Mobility & Biome Tech (36..40)
+  // ==========================================================================
+  {
+    id: 'chal_wall_climber',
+    index: 36,
+    name: 'Vertical Velocity',
+    description: 'Link six consecutive wall-jumps cleanly without touching solid floor.',
+    category: 'movement',
+    rewardBits: 120,
+  },
+  {
+    id: 'chal_cryo_drift',
+    index: 37,
+    name: 'Sub-Zero Footing',
+    description: 'Traverse the Cryo Conduit Vault without falling into a single hazard pit.',
+    category: 'movement',
+    rewardBits: 180,
+  },
+  {
+    id: 'chal_rhythm_flow',
+    index: 38,
+    name: 'Syncopated Stride',
+    description: 'Clear the Neon Pulse toggle bridge on beat without triggering a hazard warp.',
+    category: 'movement',
+    rewardBits: 180,
+  },
+  {
+    id: 'chal_walker_rampage',
+    index: 39,
+    name: 'Exo-Walker Stampede',
+    description: 'Pilot the Power Exo-Walker in the Basalt Quarry and smash through eight enemies.',
+    category: 'movement',
+    rewardBits: 180,
+  },
+  {
+    id: 'chal_chain_dasher_ace',
+    index: 40,
+    name: 'Tether Acrobat',
+    description: 'Chain three mid-air hookshot zips into dive-kick bounces without landing.',
+    category: 'movement',
+    rewardBits: 200,
+  },
+
+  // ==========================================================================
+  // Collectibles, Rescues & Full Arsenal Completion (41..46)
+  // ==========================================================================
+  {
+    id: 'chal_rescues_32',
+    index: 41,
+    name: 'Halfway Home',
+    description: 'Rescue 32 stranded Circuit Guard units across the eight main sectors.',
+    category: 'collectible',
+    rewardBits: 220,
+  },
+  {
+    id: 'chal_rescues_all_64',
+    index: 42,
+    name: 'Full Roll Call',
+    description: 'Rescue all 64 stranded Circuit Guard units across every main sector.',
+    category: 'collectible',
+    rewardBits: 500,
+  },
+  {
+    id: 'chal_all_armors',
+    index: 43,
+    name: 'Full Spectrum Wardrobe',
+    description: 'Unlock all 12 functional Armor Paints in the HQ Paint Bay.',
+    category: 'collectible',
+    rewardBits: 320,
+  },
+  {
+    id: 'chal_all_bursts',
+    index: 44,
+    name: 'Grandmaster of Bursts',
+    description: 'Unlock all 20 Burst Techniques at the Burst Dojo.',
+    category: 'collectible',
+    rewardBits: 320,
+  },
+  {
+    id: 'chal_all_chips',
+    index: 45,
+    name: 'Medbay Completist',
+    description: 'Fabricate all 20 Booster Chips inside the Medbay Chip Lab.',
+    category: 'collectible',
+    rewardBits: 350,
+  },
+  {
+    id: 'chal_all_datachips',
+    index: 46,
+    name: 'Circuit Archivist',
+    description: 'Unlock all 100 entries in the Krunked Circuit Data Chip Compendium.',
+    category: 'collectible',
+    rewardBits: 450,
+  },
+
+  // ==========================================================================
+  // Modes, Speedrun, Boss Rush, Circuit Mode & All 6 Modifiers (47..53)
+  // ==========================================================================
+  {
+    id: 'chal_speedrun_stage',
+    index: 47,
+    name: 'Lightning Split',
+    description: 'Clear any main sector in under 2 minutes 30 seconds on the stage timer.',
+    category: 'mode',
+    rewardBits: 220,
+  },
+  {
+    id: 'chal_speedrun_mode',
+    index: 48,
+    name: 'Clockwork Runner',
+    description: 'Complete a full campaign run in Speedrun Mode.',
+    category: 'mode',
+    rewardBits: 400,
+  },
+  {
+    id: 'chal_boss_rush_clear',
+    index: 49,
+    name: 'Coliseum Champion',
+    description: 'Defeat all 12 bosses consecutively in Boss Rush Mode.',
+    category: 'mode',
+    rewardBits: 450,
+  },
+  {
+    id: 'chal_circuit_mode_clear',
+    index: 50,
+    name: 'True Circuit Operative',
+    description: 'Clear the campaign in hardcore Circuit Mode with restricted boosters and Burst.',
+    category: 'mode',
+    rewardBits: 500,
+  },
+  {
+    id: 'chal_mod_rude_double',
+    index: 51,
+    name: 'Rude Awakening',
+    description: 'Clear any sector with both Rude Enemies and Double Hazards modifiers active.',
+    category: 'mode',
+    rewardBits: 300,
+  },
+  {
+    id: 'chal_mod_single_iron',
+    index: 52,
+    name: 'Iron Single Credit',
+    description: 'Complete a mission with Single Credit and Iron Circuit modifiers enabled.',
+    category: 'mode',
+    rewardBits: 350,
+  },
+  {
+    id: 'chal_mod_mirror_master',
+    index: 53,
+    name: 'Inverted Legend',
+    description: 'Earn an S Rank on any stage with Mirror World and Master Levels modifiers enabled.',
+    category: 'mode',
+    rewardBits: 400,
   },
 ] as const;
 
