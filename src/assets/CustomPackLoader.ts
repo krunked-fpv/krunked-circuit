@@ -201,7 +201,7 @@ export class CustomPackLoader {
    * or when invoked in a DOM-free Node environment.
    */
   async probeDevServer(): Promise<AssetPackManifest | null> {
-    if (typeof window === 'undefined' || typeof fetch !== 'function') {
+    if (!import.meta.env?.DEV || typeof window === 'undefined' || typeof fetch !== 'function') {
       return null;
     }
 
