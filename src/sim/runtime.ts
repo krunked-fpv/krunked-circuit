@@ -20,7 +20,12 @@ import { getEnemyArchetype, getStageDefinition } from '../data/index';
 import { createBossEntity, updateBoss } from './bosses';
 import { applyDamageToPlayer, spawnProjectile } from './combat';
 import { updateEnemies } from './enemies';
-import { completeStage, createInitialProgression } from './progression';
+import {
+  completeStage,
+  createInitialProgression,
+  evaluateChallenges,
+  unlockDataChip,
+} from './progression';
 import {
   createSimState,
   loadStageIntoState,
@@ -50,13 +55,16 @@ function handleStageClear(state: SimState): void {
   state.stageStats = stats;
   state.player.action = 'victory';
   state.screen = 'stage_clear';
+  evaluateChallenges(state);
   state.events.push(
     { type: 'bgm', key: 'bgm_stage_clear', fadeMs: 120 },
     { type: 'stageClear', stats: { ...stats } },
   );
 }
 
-function handleBossDefeated(state: SimState, _boss: BossEntity): void {
+function handleBossDefeated(state: SimState, boss: BossEntity): void {
+  unlockDataChip(state, boss.bossId);
+  evaluateChallenges(state);
   if (state.bossRush.active) {
     state.bossRush.splitTicks.push(state.bossRush.totalTicks);
     const nextIdx = state.bossRush.currentIndex + 1;
@@ -97,8 +105,9 @@ function handleBossDefeated(state: SimState, _boss: BossEntity): void {
   state.stageClearTimer = 90;
 }
 
-function handleEnemyDefeated(_state: SimState, _enemy: EnemyEntity): void {
-  // Drop economy & stats are handled in combat.ts; hook point ready for Wave 2 challenges.
+function handleEnemyDefeated(state: SimState, enemy: EnemyEntity): void {
+  unlockDataChip(state, enemy.minibossId ?? enemy.archetypeId);
+  evaluateChallenges(state);
 }
 
 export function createFullSimHooks(): SimStepHooks {

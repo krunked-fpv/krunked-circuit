@@ -63,6 +63,14 @@ export default defineConfig({
     assetsDir: 'assets',
     sourcemap: false,
     target: 'es2022',
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'sim-core': ['./src/sim/runtime.ts'],
+          'assets-audio': ['./src/assets/AssetRegistry.ts', './src/audio/AudioEngine.ts'],
+        },
+      },
+    },
   },
   test: {
     environment: 'node',
