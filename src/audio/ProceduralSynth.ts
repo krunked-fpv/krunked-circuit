@@ -130,28 +130,10 @@ function noteHoldSteps(arr: readonly number[], startIdx: number): number {
   return count;
 }
 
-function transposePattern(str: string, semitones: number): string {
-  const names = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
-  return str
-    .replace(/\|/g, ' | ')
-    .trim()
-    .split(/\s+/)
-    .map((tok) => {
-      if (tok === '|' || tok === '.' || tok === '-' || tok === '_' || tok === '~') {
-        return tok;
-      }
-      const midi = parseNoteToken(tok);
-      if (midi < 0) return tok;
-      const shifted = midi + semitones;
-      const oct = Math.floor(shifted / 12) - 1;
-      const name = names[((shifted % 12) + 12) % 12];
-      return `${name}${oct}`;
-    })
-    .join(' ');
-}
-
 // ============================================================================
-// Flagship & Full-Catalog 16-Bit Compositions (All 23 BGM Keys!)
+// Full-Catalog 16-Bit Mega Man X / Zero-Inspired Compositions (All 23 BGM Keys!)
+// Every single track has its own original motif, key signature, tempo, bass
+// groove, harmony arpeggio, drum kit groove, and Intro -> 64-step Loop!
 // ============================================================================
 
 const SONGS: Readonly<Record<BgmKey, SongComposition>> = {
@@ -169,23 +151,35 @@ const SONGS: Readonly<Record<BgmKey, SongComposition>> = {
     arpStyle: 'pulse12',
     echoMix: 0.16,
     intro: makeSection(
-      'E5 . G5 . B5 . D6 . | E6 - - - D6 . B5 .',
-      'E2 . E3 . E2 . E3 . | D2 . D3 . B1 . D2 .',
-      'E4 G4 B4 E5 G4 B4 E5 G5 | D4 F#4 A4 D5 B3 D4 F#4 B4',
-      'C.h.S.h.K.K.T.tR',
+      [
+        'E5 . G5 . B5 . D6 . | E6 - - - D6 . B5 .',
+        'C6 . B5 . A5 . G5 . | F#5 - A5 . B5 - - .',
+      ].join(' | '),
+      [
+        'E2 . E3 . E2 . E3 . | D2 . D3 . B1 . D2 .',
+        'C2 . C3 . A1 . C2 . | B1 B1 B2 B1 B1 . D#2 .',
+      ].join(' | '),
+      [
+        'E4 G4 B4 E5 G4 B4 E5 G5 | D4 F#4 A4 D5 B3 D4 F#4 B4',
+        'C4 E4 G4 C5 A3 C4 E4 A4 | B3 D#4 F#4 B4 F#4 D#4 B3 F#4',
+      ].join(' | '),
+      [
+        'C.h.S.h.K.hKS.hH',
+        'K.h.S.h.T.t.R.R.',
+      ].join(' | '),
     ),
     main: makeSection(
       [
         'E5 - . B4 E5 . F#5 . | G5 - - . F#5 . E5 .',
         'D5 - . A4 D5 . E5 . | F#5 - - . E5 . D5 .',
         'C5 - . G4 C5 . D5 . | E5 - G5 - A5 . B5 .',
-        'B5 - - . A5 . G5 . | F#5 - - . D5 . B4 .',
+        'B5 - - . A5 . G5 . | F#5 - - . D#5 . B4 .',
       ].join(' | '),
       [
         'E2 E2 E3 E2 E2 E2 E3 E2 | E2 E2 E3 E2 G2 . F#2 .',
         'D2 D2 D3 D2 D2 D2 D3 D2 | D2 D2 D3 D2 F#2 . E2 .',
         'C2 C2 C3 C2 C2 C2 C3 C2 | C2 C2 C3 C2 D2 . E2 .',
-        'B1 B1 B2 B1 B1 B1 B2 B1 | B1 B1 B2 B1 D2 . B1 .',
+        'B1 B1 B2 B1 B1 B1 B2 B1 | B1 B1 B2 B1 D#2 . B1 .',
       ].join(' | '),
       [
         'E4 G4 B4 E5 B4 G4 E4 G4 | E4 G4 B4 E5 B4 G4 E4 B4',
@@ -204,7 +198,7 @@ const SONGS: Readonly<Record<BgmKey, SongComposition>> = {
 
   // --------------------------------------------------------------------------
   // 2. bgm_hub — 3-stem dynamic crossfading hub theme (135 BPM, C major / Am)
-  // Core groove plays continuously; command / medbay / dojo crossfade smoothly!
+  // 16-step Command Deck arrival chime -> seamless 64-step 3-stem crossfade!
   // --------------------------------------------------------------------------
   bgm_hub: {
     bpm: 135,
@@ -216,6 +210,12 @@ const SONGS: Readonly<Record<BgmKey, SongComposition>> = {
     leadStyle: 'pulse25',
     arpStyle: 'triangle',
     echoMix: 0.14,
+    intro: makeSection(
+      'G5 . C6 . E6 - D6 . | C6 . G5 . B5 - - .',
+      'C2 . G2 . C3 . G2 . | G1 . D2 . G2 . B1 .',
+      'C4 E4 G4 C5 E4 G4 C5 E5 | G3 B3 D4 G4 D4 B3 G3 D4',
+      'K.h.S.h.K.h.T.t.',
+    ),
     main: makeSection(
       // Base melodic pad is silent; all 3 hub melodies live in dedicated stems!
       [
@@ -250,7 +250,7 @@ const SONGS: Readonly<Record<BgmKey, SongComposition>> = {
           'E5 - G5 . C6 - . B5 | G5 - E5 - . . D5 .',
           'C5 - E5 . A5 - . G5 | E5 - C5 - . . G5 .',
           'F5 - A5 . C6 - B5 . | A5 - F5 - . . A5 .',
-          'G5 - B5 . D6 - C6 . | B5 - G5 - . . . .',
+          'G5 - B5 . D6 - C6 . | B5 - G5 - . . D5 .',
         ].join(' | '),
       ),
       commandArp: parseNotes(
@@ -307,7 +307,54 @@ const SONGS: Readonly<Record<BgmKey, SongComposition>> = {
   },
 
   // --------------------------------------------------------------------------
-  // 3. bgm_opening — Driving high-speed expressway action theme (158 BPM, Dm)
+  // 3. bgm_tutorial — Upbeat VR Calibration Course (138 BPM, G major)
+  // --------------------------------------------------------------------------
+  bgm_tutorial: {
+    bpm: 138,
+    loop: true,
+    leadGain: 0.23,
+    bassGain: 0.25,
+    arpGain: 0.14,
+    drumGain: 0.26,
+    leadStyle: 'pulse25',
+    arpStyle: 'triangle',
+    echoMix: 0.12,
+    intro: makeSection(
+      'D5 . G5 . A5 . B5 . | D6 - B5 . A5 . G5 .',
+      'G2 . D2 . G2 . B2 . | D2 . A2 . D3 . F#2 .',
+      'G4 B4 D5 G5 B4 D5 G5 B5 | D4 F#4 A4 D5 A4 F#4 D4 A4',
+      'K.B.S.h.K.K.T.t.',
+    ),
+    main: makeSection(
+      [
+        'G5 . B5 . D6 - B5 . | A5 . G5 . E5 - D5 .',
+        'E5 . G5 . B5 - A5 . | G5 - F#5 . E5 - . .',
+        'C5 . E5 . G5 - B5 . | A5 . G5 . F#5 - D5 .',
+        'G5 . A5 . B5 - D6 . | C6 . B5 . A5 - . .',
+      ].join(' | '),
+      [
+        'G2 . G3 . G2 . D3 . | G2 . G3 . B2 . D3 .',
+        'E2 . E3 . E2 . B2 . | E2 . E3 . D2 . B1 .',
+        'C2 . C3 . C2 . G2 . | D2 . D3 . D2 . A2 .',
+        'G2 . G3 . B2 . G2 . | D2 . D3 . F#2 . D2 .',
+      ].join(' | '),
+      [
+        'G4 B4 D5 G5 D5 B4 G4 D5 | G4 B4 D5 G5 B4 D5 G5 D5',
+        'E4 G4 B4 E5 B4 G4 E4 B4 | E4 G4 B4 E5 D4 F#4 A4 D5',
+        'C4 E4 G4 C5 G4 E4 C4 G4 | D4 F#4 A4 D5 A4 F#4 D4 A4',
+        'G4 B4 D5 G5 D5 B4 G4 D5 | D4 F#4 A4 D5 F#4 A4 D5 A4',
+      ].join(' | '),
+      [
+        'C.h.S.h.K.B.S.h.',
+        'K.h.S.h.K.hKT.t.',
+        'C.h.S.h.K.B.S.hH',
+        'K.h.S.h.T.t.R.h.',
+      ].join(' | '),
+    ),
+  },
+
+  // --------------------------------------------------------------------------
+  // 4. bgm_opening — Metro Expressway Overdrive (158 BPM, D minor)
   // --------------------------------------------------------------------------
   bgm_opening: {
     bpm: 158,
@@ -320,10 +367,22 @@ const SONGS: Readonly<Record<BgmKey, SongComposition>> = {
     arpStyle: 'pulse12',
     echoMix: 0.13,
     intro: makeSection(
-      'D5 . F5 . A5 . C6 . | D6 - A5 . C6 . A5 G5',
-      'D2 D2 D3 D2 D2 D2 D3 D2 | C2 C2 C3 C2 A1 . C2 .',
-      'D4 F4 A4 D5 F4 A4 D5 F5 | C4 E4 G4 C5 A3 C4 E4 A4',
-      'C.h.S.h.T.T.t.R.',
+      [
+        'D5 . F5 . A5 . C6 . | D6 - A5 . C6 . A5 G5',
+        'F5 . G5 . A5 . Bb5 . | A5 - - . E5 . A5 .',
+      ].join(' | '),
+      [
+        'D2 D2 D3 D2 D2 D2 D3 D2 | C2 C2 C3 C2 Bb1 . C2 .',
+        'Bb1 Bb1 Bb2 Bb1 G1 . Bb1 . | A1 A1 A2 A1 C#2 . A1 .',
+      ].join(' | '),
+      [
+        'D4 F4 A4 D5 F4 A4 D5 F5 | C4 E4 G4 C5 Bb3 D4 F4 Bb4',
+        'Bb3 D4 F4 Bb4 G3 Bb3 D4 G4 | A3 C#4 E4 A4 E4 C#4 A3 E4',
+      ].join(' | '),
+      [
+        'C.h.S.h.K.hKS.hH',
+        'K.h.S.h.T.T.t.R.',
+      ].join(' | '),
     ),
     main: makeSection(
       [
@@ -336,7 +395,7 @@ const SONGS: Readonly<Record<BgmKey, SongComposition>> = {
         'D2 D2 D3 D2 D2 D2 D3 D2 | D2 D2 D3 D2 C2 . D2 .',
         'Bb1 Bb1 Bb2 Bb1 Bb1 Bb1 Bb2 Bb1 | C2 C2 C3 C2 A1 . C2 .',
         'D2 D2 D3 D2 D2 D2 D3 D2 | Bb1 Bb1 Bb2 Bb1 C2 . D2 .',
-        'G1 G1 G2 G1 A1 A1 A2 A1 | A1 A1 A2 A1 C2 . A1 .',
+        'G1 G1 G2 G1 A1 A1 A2 A1 | A1 A1 A2 A1 C#2 . A1 .',
       ].join(' | '),
       [
         'D4 F4 A4 D5 A4 F4 D4 A4 | D4 F4 A4 D5 A4 F4 C4 G4',
@@ -354,7 +413,7 @@ const SONGS: Readonly<Record<BgmKey, SongComposition>> = {
   },
 
   // --------------------------------------------------------------------------
-  // 4. bgm_optic — Shimmering solar desert synth-rock theme (150 BPM, F#m)
+  // 5. bgm_optic — Solar Relay Mirage (150 BPM, F# Phrygian-Dominant / F#m)
   // --------------------------------------------------------------------------
   bgm_optic: {
     bpm: 150,
@@ -367,10 +426,22 @@ const SONGS: Readonly<Record<BgmKey, SongComposition>> = {
     arpStyle: 'pulse12',
     echoMix: 0.18,
     intro: makeSection(
-      'F#5 G5 A5 C#6 B5 A5 G5 F#5 | C#6 - B5 . A5 . G5 .',
-      'F#2 . F#3 . F#2 . F#3 . | E2 . E3 . C#2 . E2 .',
-      'F#4 A4 C#5 F#5 G4 B4 D5 G5 | E4 G#4 B4 E5 C#4 F4 G#4 C#5',
-      'C.h.S.h.T.t.R.H.',
+      [
+        'F#5 G5 A5 C#6 B5 A5 G5 F#5 | C#6 - B5 . A5 . G5 .',
+        'F#5 . G5 . A#5 . C#6 . | C#6 - - . B5 . G5 .',
+      ].join(' | '),
+      [
+        'F#2 . F#3 . F#2 . F#3 . | E2 . E3 . D2 . E2 .',
+        'F#2 F#2 F#3 F#2 G2 . F#2 . | C#2 C#2 C#3 C#2 F2 . C#2 .',
+      ].join(' | '),
+      [
+        'F#4 A4 C#5 F#5 G4 B4 D5 G5 | E4 G#4 B4 E5 D4 F#4 A4 D5',
+        'F#4 A#4 C#5 F#5 G4 B4 D5 G5 | C#4 F4 G#4 C#5 G#4 F4 C#4 G#4',
+      ].join(' | '),
+      [
+        'C.h.S.h.K.B.S.h.',
+        'K.h.S.h.T.t.R.H.',
+      ].join(' | '),
     ),
     main: makeSection(
       [
@@ -401,7 +472,573 @@ const SONGS: Readonly<Record<BgmKey, SongComposition>> = {
   },
 
   // --------------------------------------------------------------------------
-  // 5. bgm_boss_opening — Urgent armored-mech boss battle (164 BPM, C minor)
+  // 6. bgm_patch — Scrap Forge Foundry (144 BPM, A minor industrial stomp)
+  // --------------------------------------------------------------------------
+  bgm_patch: {
+    bpm: 144,
+    loop: true,
+    leadGain: 0.25,
+    bassGain: 0.31,
+    arpGain: 0.14,
+    drumGain: 0.33,
+    leadStyle: 'saw',
+    arpStyle: 'pulse12',
+    echoMix: 0.12,
+    intro: makeSection(
+      'A4 . A4 . C5 . D5 Eb5 | E5 - D5 . C5 . G4 .',
+      'A1 A1 . A1 C2 . D2 Eb2 | E2 - D2 . C2 . G1 .',
+      'A3 C4 E4 A4 A3 C4 E4 A4 | E3 G#3 B3 E4 G3 B3 D4 G4',
+      'C.A.S.A.K.K.T.R.',
+    ),
+    main: makeSection(
+      [
+        'A4 . C5 . E5 - D5 . | C5 . A4 . G4 . A4 .',
+        'C5 . D5 . Eb5 - D5 . | C5 . A4 . E4 - . .',
+        'F4 . A4 . C5 - D5 . | E5 - D5 . C5 . B4 .',
+        'A4 . G4 . A4 . C5 . | E5 - - . D5 . B4 .',
+      ].join(' | '),
+      [
+        'A1 A1 A2 A1 A1 . G1 . | A1 A1 A2 A1 E2 . G1 .',
+        'C2 C2 C3 C2 B1 . A1 . | A1 A1 A2 A1 G1 . E1 .',
+        'F1 F1 F2 F1 F1 . G1 . | A1 A1 A2 A1 G1 . F1 .',
+        'D1 D1 D2 D1 F1 . G1 . | E1 E1 E2 E1 G#1 . E1 .',
+      ].join(' | '),
+      [
+        'A3 C4 E4 A4 E4 C4 A3 E4 | A3 C4 E4 A4 G3 B3 D4 G4',
+        'C4 E4 G4 C5 B3 D4 F4 B4 | A3 C4 E4 A4 E4 C4 A3 E4',
+        'F3 A3 C4 F4 C4 A3 F3 C4 | A3 C4 E4 A4 G3 B3 D4 G4',
+        'D3 F3 A3 D4 F3 A3 C4 F4 | E3 G#3 B3 E4 B3 G#3 E3 B3',
+      ].join(' | '),
+      [
+        'C.A.S.h.K.K.S.A.',
+        'K.A.S.h.K.K.T.t.',
+        'C.A.S.h.K.K.S.AH',
+        'K.K.S.A.T.t.R.H.',
+      ].join(' | '),
+    ),
+  },
+
+  // --------------------------------------------------------------------------
+  // 7. bgm_cooler — Cryo Conduit Drift (142 BPM, Eb minor crystalline bells)
+  // --------------------------------------------------------------------------
+  bgm_cooler: {
+    bpm: 142,
+    loop: true,
+    leadGain: 0.23,
+    bassGain: 0.26,
+    arpGain: 0.16,
+    drumGain: 0.26,
+    leadStyle: 'pulse12',
+    arpStyle: 'triangle',
+    echoMix: 0.21,
+    intro: makeSection(
+      [
+        'Bb5 . Gb5 . Eb5 . Bb4 . | Db5 . F5 . Ab5 - Gb5 .',
+        'B5 . Gb5 . Eb5 . B4 . | Bb4 - D5 . F5 - - .',
+      ].join(' | '),
+      [
+        'Eb2 . Eb3 . Eb2 . Db2 . | Db2 . Db3 . Ab1 . Db2 .',
+        'B1 . B2 . B1 . Gb1 . | Bb1 . Bb2 . D2 . Bb1 .',
+      ].join(' | '),
+      [
+        'Eb4 Gb4 Bb4 Eb5 Gb4 Bb4 Eb5 Gb5 | Db4 F4 Ab4 Db5 F4 Ab4 Db5 F5',
+        'B3 Eb4 Gb4 B4 Eb4 Gb4 B4 Eb5 | Bb3 D4 F4 Bb4 D4 F4 Bb4 D5',
+      ].join(' | '),
+      [
+        'C.B.S.B.K.h.S.B.',
+        'K.B.S.B.K.T.t.H.',
+      ].join(' | '),
+    ),
+    main: makeSection(
+      [
+        'Eb5 . Gb5 . Bb5 - Ab5 . | Gb5 . F5 . Eb5 - Db5 .',
+        'B4 . Eb5 . Gb5 - Ab5 . | Bb5 - - . F5 - . .',
+        'Gb5 . Bb5 . Db6 - B5 . | Bb5 . Ab5 . Gb5 - F5 .',
+        'Eb5 . F5 . Gb5 - Ab5 . | Bb5 - Ab5 . F5 - . .',
+      ].join(' | '),
+      [
+        'Eb2 . Eb3 Eb2 Eb2 . Db2 . | Eb2 . Eb3 Eb2 Gb2 . F2 .',
+        'B1 . B2 B1 B1 . Db2 . | Bb1 . Bb2 Bb1 D2 . Bb1 .',
+        'Gb1 . Gb2 Gb1 Gb1 . F1 . | Eb2 . Eb3 Eb2 Db2 . B1 .',
+        'Ab1 . Ab2 Ab1 B1 . Db2 . | Bb1 . Bb2 Bb1 D2 . F2 .',
+      ].join(' | '),
+      [
+        'Eb4 Gb4 Bb4 Eb5 Bb4 Gb4 Eb4 Bb4 | Eb4 Gb4 Bb4 Eb5 Db4 F4 Ab4 Db5',
+        'B3 Eb4 Gb4 B4 Gb4 Eb4 B3 Gb4 | Bb3 D4 F4 Bb4 F4 D4 Bb3 F4',
+        'Gb4 Bb4 Db5 Gb5 Db5 Bb4 Gb4 Db5 | Eb4 Gb4 Bb4 Eb5 Db4 F4 Ab4 Db5',
+        'Ab3 B3 Eb4 Ab4 B3 Eb4 Gb4 B4 | Bb3 D4 F4 Bb4 D4 F4 Bb4 D5',
+      ].join(' | '),
+      [
+        'C.B.S.h.K.hKS.BH',
+        'K.B.S.h.K.B.T.t.',
+        'C.B.S.h.K.hKS.BH',
+        'K.h.S.B.T.t.R.H.',
+      ].join(' | '),
+    ),
+  },
+
+  // --------------------------------------------------------------------------
+  // 8. bgm_elec — High-Voltage Surge (156 BPM, B minor lightning shredder)
+  // --------------------------------------------------------------------------
+  bgm_elec: {
+    bpm: 156,
+    loop: true,
+    leadGain: 0.25,
+    bassGain: 0.3,
+    arpGain: 0.16,
+    drumGain: 0.32,
+    leadStyle: 'pulse25',
+    arpStyle: 'pulse12',
+    echoMix: 0.14,
+    intro: makeSection(
+      [
+        'B5 F#5 D5 B4 B5 F#5 D5 B4 | A5 E5 C#5 A4 A5 E5 C#5 A4',
+        'G5 D5 B4 G4 A5 E5 C#5 A4 | F#5 - A#5 . C#6 - - .',
+      ].join(' | '),
+      [
+        'B1 B1 B2 B1 B1 B1 B2 B1 | A1 A1 A2 A1 A1 A1 A2 A1',
+        'G1 G1 G2 G1 A1 A1 A2 A1 | F#1 F#1 F#2 F#1 A#1 . F#1 .',
+      ].join(' | '),
+      [
+        'B3 D4 F#4 B4 D4 F#4 B4 D5 | A3 C#4 E4 A4 C#4 E4 A4 C#5',
+        'G3 B3 D4 G4 A3 C#4 E4 A4 | F#3 A#3 C#4 F#4 C#4 A#3 F#3 C#4',
+      ].join(' | '),
+      [
+        'C.K.S.h.K.K.S.hH',
+        'K.K.S.K.T.t.R.R.',
+      ].join(' | '),
+    ),
+    main: makeSection(
+      [
+        'B4 D5 F#5 B5 A5 F#5 D5 F#5 | G5 . F#5 . E5 . D5 .',
+        'E5 G5 B5 E6 D6 B5 G5 B5 | F#5 - E5 . D5 . C#5 .',
+        'D5 F#5 A5 D6 C#6 A5 F#5 A5 | B5 - A5 . G5 . F#5 .',
+        'G5 . A5 . B5 . C#6 . | A#5 - F#5 . C#6 - B5 .',
+      ].join(' | '),
+      [
+        'B1 B1 B2 B1 B1 B1 B2 B1 | G1 G1 G2 G1 A1 . B1 .',
+        'E2 E2 E3 E2 E2 E2 E3 E2 | F#1 F#1 F#2 F#1 A1 . F#1 .',
+        'D2 D2 D3 D2 D2 D2 D3 D2 | G1 G1 G2 G1 G1 . F#1 .',
+        'E2 E2 E3 E2 G1 G1 G2 G1 | F#1 F#1 F#2 F#1 A#1 . C#2 .',
+      ].join(' | '),
+      [
+        'B3 D4 F#4 B4 F#4 D4 B3 F#4 | G3 B3 D4 G4 A3 C#4 E4 A4',
+        'E4 G4 B4 E5 B4 G4 E4 B4 | F#3 A#3 C#4 F#4 C#4 A#3 F#3 C#4',
+        'D4 F#4 A4 D5 A4 F#4 D4 A4 | G3 B3 D4 G4 D4 B3 G3 D4',
+        'E4 G4 B4 E5 G3 B3 D4 G4 | F#3 A#3 C#4 F#4 A#3 C#4 F#4 A#4',
+      ].join(' | '),
+      [
+        'C.hKS.h.K.hKS.hH',
+        'K.hKS.h.K.K.T.t.',
+        'C.hKS.h.K.hKS.hH',
+        'K.K.S.T.t.S.R.H.',
+      ].join(' | '),
+    ),
+  },
+
+  // --------------------------------------------------------------------------
+  // 9. bgm_shift — Skyway Convoy Run (152 BPM, F minor soaring aerial gallop)
+  // --------------------------------------------------------------------------
+  bgm_shift: {
+    bpm: 152,
+    loop: true,
+    leadGain: 0.24,
+    bassGain: 0.28,
+    arpGain: 0.15,
+    drumGain: 0.3,
+    leadStyle: 'pulse25',
+    arpStyle: 'saw',
+    echoMix: 0.15,
+    intro: makeSection(
+      [
+        'C5 . F5 . G5 . Ab5 . | C6 - Bb5 . Ab5 . G5 .',
+        'F5 . G5 . Ab5 . Bb5 . | C6 - - . G5 . E5 .',
+      ].join(' | '),
+      [
+        'F2 . F2 F3 F2 . Eb2 . | Db2 . Db2 Db3 Db2 . Eb2 .',
+        'Bb1 . Bb1 Bb2 Bb1 . Db2 . | C2 C2 C3 C2 E2 . C2 .',
+      ].join(' | '),
+      [
+        'F4 Ab4 C5 F5 Ab4 C5 F5 Ab5 | Db4 F4 Ab4 Db5 Eb4 G4 Bb4 Eb5',
+        'Bb3 Db4 F4 Bb4 Db4 F4 Ab4 Db5 | C4 E4 G4 C5 G4 E4 C4 G4',
+      ].join(' | '),
+      [
+        'C.B.S.B.K.hKS.BH',
+        'K.B.S.B.T.t.R.H.',
+      ].join(' | '),
+    ),
+    main: makeSection(
+      [
+        'F5 - Ab5 . C6 - Bb5 . | Ab5 . G5 . F5 . Eb5 .',
+        'Db5 - F5 . Ab5 - G5 . | F5 - Eb5 . C5 - . .',
+        'Bb4 . Db5 . F5 . Ab5 . | G5 - Bb5 . Eb6 - Db6 .',
+        'C6 - Bb5 . Ab5 . G5 . | C6 - - . G5 . E5 .',
+      ].join(' | '),
+      [
+        'F2 F2 F3 F2 F2 . Eb2 . | F2 F2 F3 F2 Ab2 . G2 .',
+        'Db2 Db2 Db3 Db2 Db2 . Eb2 . | C2 C2 C3 C2 G1 . C2 .',
+        'Bb1 Bb1 Bb2 Bb1 Bb1 . Db2 . | Eb2 Eb2 Eb3 Eb2 G2 . Eb2 .',
+        'Ab1 Ab1 Ab2 Ab1 Bb1 . Db2 . | C2 C2 C3 C2 E2 . C2 .',
+      ].join(' | '),
+      [
+        'F4 Ab4 C5 F5 C5 Ab4 F4 C5 | F4 Ab4 C5 F5 Eb4 G4 Bb4 Eb5',
+        'Db4 F4 Ab4 Db5 Ab4 F4 Db4 Ab4 | C4 E4 G4 C5 G4 E4 C4 G4',
+        'Bb3 Db4 F4 Bb4 F4 Db4 Bb3 F4 | Eb4 G4 Bb4 Eb5 Bb4 G4 Eb4 Bb4',
+        'Ab3 C4 Eb4 Ab4 Bb3 Db4 F4 Bb4 | C4 E4 G4 C5 E4 G4 C5 E5',
+      ].join(' | '),
+      [
+        'C.B.S.h.K.hKS.BH',
+        'K.K.S.B.K.h.T.t.',
+        'C.B.S.h.K.hKS.BH',
+        'K.K.S.B.T.t.R.H.',
+      ].join(' | '),
+    ),
+  },
+
+  // --------------------------------------------------------------------------
+  // 10. bgm_wave — Neon Pulse Frequency (148 BPM, C# minor synth-disco pulse)
+  // --------------------------------------------------------------------------
+  bgm_wave: {
+    bpm: 148,
+    loop: true,
+    leadGain: 0.24,
+    bassGain: 0.29,
+    arpGain: 0.16,
+    drumGain: 0.31,
+    leadStyle: 'pulse12',
+    arpStyle: 'pulse12',
+    echoMix: 0.18,
+    intro: makeSection(
+      [
+        'G#5 . . E5 . G#5 . B5 | C#6 - B5 . G#5 . F#5 .',
+        'E5 . . C#5 . E5 . F#5 | G#5 - - . D#5 . G#5 .',
+      ].join(' | '),
+      [
+        'C#2 C#3 C#2 C#3 B1 B2 B1 B2 | A1 A2 A1 A2 B1 B2 B1 B2',
+        'C#2 C#3 C#2 C#3 E2 E3 E2 E3 | G#1 G#2 G#1 G#2 G#1 . C2 .',
+      ].join(' | '),
+      [
+        'C#4 E4 G#4 C#5 B3 D#4 F#4 B4 | A3 C#4 E4 A4 B3 D#4 F#4 B4',
+        'C#4 E4 G#4 C#5 E4 G#4 B4 E5 | G#3 C4 D#4 G#4 D#4 C4 G#3 D#4',
+      ].join(' | '),
+      [
+        'X.h.Y.B.X.h.Y.BH',
+        'X.h.Y.B.X.T.t.R.',
+      ].join(' | '),
+    ),
+    main: makeSection(
+      [
+        'C#5 . E5 . G#5 - F#5 . | E5 . D#5 . C#5 - B4 .',
+        'A4 . C#5 . E5 - F#5 . | G#5 - F#5 . D#5 - . .',
+        'C#5 . E5 . G#5 . B5 . | C#6 - B5 . A5 . G#5 .',
+        'F#5 . G#5 . A5 - B5 . | G#5 - - . D#5 . C5 .',
+      ].join(' | '),
+      [
+        'C#2 C#3 C#2 C#3 C#2 C#3 B1 B2 | C#2 C#3 C#2 C#3 E2 E3 D#2 D#3',
+        'A1 A2 A1 A2 A1 A2 B1 B2 | G#1 G#2 G#1 G#2 C2 C3 G#1 G#2',
+        'C#2 C#3 C#2 C#3 B1 B2 B1 B2 | A1 A2 A1 A2 G#1 G#2 F#1 F#2',
+        'F#1 F#2 F#1 F#2 A1 A2 B1 B2 | G#1 G#2 G#1 G#2 C2 . G#1 .',
+      ].join(' | '),
+      [
+        'C#4 E4 G#4 C#5 G#4 E4 C#4 G#4 | C#4 E4 G#4 C#5 B3 D#4 F#4 B4',
+        'A3 C#4 E4 A4 E4 C#4 A3 E4 | G#3 C4 D#4 G#4 D#4 C4 G#3 D#4',
+        'C#4 E4 G#4 C#5 B3 D#4 F#4 B4 | A3 C#4 E4 A4 G#3 B3 E4 G#4',
+        'F#3 A3 C#4 F#4 A3 C#4 E4 A4 | G#3 C4 D#4 G#4 C4 D#4 G#4 C5',
+      ].join(' | '),
+      [
+        'C.h.Y.B.X.h.Y.BH',
+        'X.h.Y.B.X.hKT.t.',
+        'C.h.Y.B.X.h.Y.BH',
+        'X.h.Y.B.T.t.R.H.',
+      ].join(' | '),
+    ),
+  },
+
+  // --------------------------------------------------------------------------
+  // 11. bgm_break — Basalt Quarry Breaker (140 BPM, G minor heavy metal stomp)
+  // --------------------------------------------------------------------------
+  bgm_break: {
+    bpm: 140,
+    loop: true,
+    leadGain: 0.25,
+    bassGain: 0.33,
+    arpGain: 0.13,
+    drumGain: 0.35,
+    leadStyle: 'saw',
+    arpStyle: 'triangle',
+    echoMix: 0.11,
+    intro: makeSection(
+      'G4 . G4 . Bb4 . C5 Db5 | D5 - C5 . Bb4 . F4 .',
+      'G1 G1 . G1 Bb1 . C2 Db2 | D2 - C2 . Bb1 . F1 .',
+      'G3 Bb3 D4 G4 G3 Bb3 D4 G4 | D3 F#3 A3 D4 F3 A3 C4 F4',
+      'C.K.S.A.K.T.t.R.',
+    ),
+    main: makeSection(
+      [
+        'G4 - Bb4 . D5 - C5 . | Bb4 . A4 . G4 - F4 .',
+        'Eb4 - G4 . Bb4 - A4 . | D5 - C5 . A4 - F#4 .',
+        'G4 . Bb4 . D5 . F5 . | G5 - F5 . Eb5 . D5 .',
+        'C5 - Bb4 . A4 . G4 . | D5 - - . F#4 . A4 .',
+      ].join(' | '),
+      [
+        'G1 G1 G2 G1 G1 . F1 . | G1 G1 G2 G1 Bb1 . A1 .',
+        'Eb1 Eb1 Eb2 Eb1 Eb1 . F1 . | D1 D1 D2 D1 F#1 . D1 .',
+        'G1 G1 G2 G1 F1 . G1 . | Eb1 Eb1 Eb2 Eb1 D1 . C1 .',
+        'C2 C2 C3 C2 A1 . G1 . | D1 D1 D2 D1 F#1 . A1 .',
+      ].join(' | '),
+      [
+        'G3 Bb3 D4 G4 D4 Bb3 G3 D4 | G3 Bb3 D4 G4 F3 A3 C4 F4',
+        'Eb3 G3 Bb3 Eb4 Bb3 G3 Eb3 Bb3 | D3 F#3 A3 D4 A3 F#3 D3 A3',
+        'G3 Bb3 D4 G4 F3 A3 C4 F4 | Eb3 G3 Bb3 Eb4 D3 F3 A3 D4',
+        'C4 Eb4 G4 C5 A3 C4 Eb4 A4 | D3 F#3 A3 D4 F#3 A3 D4 F#4',
+      ].join(' | '),
+      [
+        'C.K.S.A.K.K.S.t.',
+        'K.K.S.A.K.T.t.H.',
+        'C.K.S.A.K.K.S.t.',
+        'K.A.S.K.T.t.R.H.',
+      ].join(' | '),
+    ),
+  },
+
+  // --------------------------------------------------------------------------
+  // 12. bgm_cipher — Cipher Matrix Infiltration (154 BPM, Ab minor stealth-tech)
+  // --------------------------------------------------------------------------
+  bgm_cipher: {
+    bpm: 154,
+    loop: true,
+    leadGain: 0.23,
+    bassGain: 0.28,
+    arpGain: 0.16,
+    drumGain: 0.3,
+    leadStyle: 'pulse12',
+    arpStyle: 'pulse12',
+    echoMix: 0.17,
+    intro: makeSection(
+      [
+        'Eb6 . B5 . Ab5 . Eb5 . | E5 . Ab5 . B5 . Db6 .',
+        'Eb6 . Db6 . B5 . Bb5 . | Eb5 - G5 . Bb5 - - .',
+      ].join(' | '),
+      [
+        'Ab1 . Ab2 . Ab1 . Gb1 . | E1 . E2 . E1 . Gb1 .',
+        'Ab1 . Ab2 . B1 . Bb1 . | Eb1 Eb1 Eb2 Eb1 G1 . Eb1 .',
+      ].join(' | '),
+      [
+        'Ab4 B4 Eb5 Ab5 Eb5 B4 Ab4 Eb5 | E4 Ab4 B4 E5 B4 Ab4 E4 B4',
+        'Ab4 B4 Eb5 Ab5 Gb4 Bb4 Db5 Gb5 | Eb4 G4 Bb4 Eb5 Bb4 G4 Eb4 Bb4',
+      ].join(' | '),
+      [
+        'C.B.h.B.K.h.S.B.',
+        'K.B.S.h.T.t.R.H.',
+      ].join(' | '),
+    ),
+    main: makeSection(
+      [
+        'Ab5 . B5 . Eb6 - Db6 . | B5 . Bb5 . Ab5 - Gb5 .',
+        'E5 . Ab5 . B5 - Db6 . | Eb6 - Db6 . Bb5 - . .',
+        'Ab5 . . B5 Db6 . Eb6 . | Gb6 - E6 . Eb6 . Db6 .',
+        'B5 . Db6 . Eb6 - B5 . | Bb5 - G5 . Eb5 - . .',
+      ].join(' | '),
+      [
+        'Ab1 Ab1 Ab2 Ab1 Ab1 . Gb1 . | Ab1 Ab1 Ab2 Ab1 B1 . Bb1 .',
+        'E1 E1 E2 E1 E1 . Gb1 . | Eb1 Eb1 Eb2 Eb1 G1 . Eb1 .',
+        'Ab1 Ab1 Ab2 Ab1 Gb1 . Ab1 . | E1 E1 E2 E1 Gb1 . Ab1 .',
+        'B1 B1 B2 B1 E1 . Gb1 . | Eb1 Eb1 Eb2 Eb1 G1 . Bb1 .',
+      ].join(' | '),
+      [
+        'Ab4 B4 Eb5 Ab5 Eb5 B4 Ab4 Eb5 | Ab4 B4 Eb5 Ab5 Gb4 Bb4 Db5 Gb5',
+        'E4 Ab4 B4 E5 B4 Ab4 E4 B4 | Eb4 G4 Bb4 Eb5 Bb4 G4 Eb4 Bb4',
+        'Ab4 B4 Eb5 Ab5 Gb4 Bb4 Db5 Gb5 | E4 Ab4 B4 E5 Gb4 Bb4 Db5 Gb5',
+        'B3 Eb4 Gb4 B4 E4 Ab4 B4 E5 | Eb4 G4 Bb4 Eb5 G4 Bb4 Eb5 G5',
+      ].join(' | '),
+      [
+        'C.hKS.B.K.hKS.BH',
+        'K.h.S.B.K.K.T.t.',
+        'C.hKS.B.K.hKS.BH',
+        'K.h.S.T.t.S.R.H.',
+      ].join(' | '),
+    ),
+  },
+
+  // --------------------------------------------------------------------------
+  // 13. bgm_final_1 — Citadel Perimeter (160 BPM, D minor fortress assault)
+  // --------------------------------------------------------------------------
+  bgm_final_1: {
+    bpm: 160,
+    loop: true,
+    leadGain: 0.26,
+    bassGain: 0.31,
+    arpGain: 0.15,
+    drumGain: 0.33,
+    leadStyle: 'pulse25',
+    arpStyle: 'pulse12',
+    echoMix: 0.14,
+    intro: makeSection(
+      [
+        'D5 . . A5 Bb5 - A5 . | G5 . F5 . E5 . A5 .',
+        'D6 - C6 . Bb5 . A5 . | G5 . F5 . E5 - A5 .',
+      ].join(' | '),
+      [
+        'D2 D2 D3 D2 Bb1 Bb1 Bb2 Bb1 | G1 G1 G2 G1 A1 . C#2 .',
+        'D2 D2 D3 D2 C2 C2 C3 C2 | Bb1 Bb1 Bb2 Bb1 A1 . C#2 .',
+      ].join(' | '),
+      [
+        'D4 F4 A4 D5 Bb3 D4 F4 Bb4 | G3 Bb3 D4 G4 A3 C#4 E4 A4',
+        'D4 F4 A4 D5 C4 E4 G4 C5 | Bb3 D4 F4 Bb4 A3 C#4 E4 A4',
+      ].join(' | '),
+      [
+        'C.K.S.h.K.K.S.hH',
+        'K.K.S.K.T.t.R.R.',
+      ].join(' | '),
+    ),
+    main: makeSection(
+      [
+        'D5 . A5 . Bb5 - A5 . | G5 . F5 . E5 - D5 .',
+        'C5 . G5 . A5 - G5 . | F5 . E5 . A5 - C#6 .',
+        'D6 . C6 . Bb5 - A5 . | G5 . A5 . Bb5 - D6 .',
+        'C6 . Bb5 . A5 - G5 . | E5 - G5 . A5 - C#6 .',
+      ].join(' | '),
+      [
+        'D2 D2 D3 D2 D2 D2 D3 D2 | Bb1 Bb1 Bb2 Bb1 Bb1 . A1 .',
+        'C2 C2 C3 C2 C2 C2 C3 C2 | A1 A1 A2 A1 A1 . C#2 .',
+        'D2 D2 D3 D2 C2 C2 C3 C2 | Bb1 Bb1 Bb2 Bb1 G1 . Bb1 .',
+        'C2 C2 C3 C2 A1 A1 A2 A1 | A1 A1 A2 A1 C#2 . E2 .',
+      ].join(' | '),
+      [
+        'D4 F4 A4 D5 A4 F4 D4 A4 | Bb3 D4 F4 Bb4 F4 D4 Bb3 F4',
+        'C4 E4 G4 C5 G4 E4 C4 G4 | A3 C#4 E4 A4 E4 C#4 A3 E4',
+        'D4 F4 A4 D5 C4 E4 G4 C5 | Bb3 D4 F4 Bb4 G3 Bb3 D4 G4',
+        'C4 E4 G4 C5 A3 C#4 E4 A4 | A3 C#4 E4 A4 C#4 E4 A4 C#5',
+      ].join(' | '),
+      [
+        'C.K.S.h.K.K.S.hH',
+        'K.K.S.h.K.K.T.t.',
+        'C.K.S.K.K.K.S.hH',
+        'K.K.S.T.t.S.R.H.',
+      ].join(' | '),
+    ),
+  },
+
+  // --------------------------------------------------------------------------
+  // 14. bgm_final_2 — Reactor Core Ascent (162 BPM, F# minor — 100% original!)
+  // --------------------------------------------------------------------------
+  bgm_final_2: {
+    bpm: 162,
+    loop: true,
+    leadGain: 0.26,
+    bassGain: 0.31,
+    arpGain: 0.16,
+    drumGain: 0.33,
+    leadStyle: 'saw',
+    arpStyle: 'pulse12',
+    echoMix: 0.15,
+    intro: makeSection(
+      [
+        'F#5 . C#5 . G5 . C#5 . | G#5 . C#5 . A5 . G#5 .',
+        'F#5 . E5 . D5 . C#5 . | B4 . D5 . C#5 - F5 .',
+      ].join(' | '),
+      [
+        'F#2 F#2 F#3 F#2 G2 G2 G3 G2 | G#2 G#2 G#3 G#2 A2 . G#2 .',
+        'F#2 F#2 E2 E2 D2 D2 C#2 C#2 | B1 B1 B2 B1 C#2 . F2 .',
+      ].join(' | '),
+      [
+        'F#4 A4 C#5 F#5 G4 B4 D5 G5 | G#4 B4 D5 G#5 A4 C#5 E5 A5',
+        'F#4 A4 C#5 F#5 D4 F#4 A4 D5 | B3 D4 F#4 B4 C#4 F4 G#4 C#5',
+      ].join(' | '),
+      [
+        'C.K.S.A.K.K.S.A.',
+        'K.S.K.S.T.t.R.R.',
+      ].join(' | '),
+    ),
+    main: makeSection(
+      [
+        'F#5 . A5 . C#6 - B5 . | A5 . G#5 . F#5 . E5 .',
+        'D5 . F#5 . B5 - A5 . | G#5 - F#5 . F5 - G#5 .',
+        'A5 . B5 . C#6 - D6 . | E6 - D6 . C#6 . B5 .',
+        'A5 . G#5 . F#5 - D5 . | C#5 - F5 . G#5 - C#6 .',
+      ].join(' | '),
+      [
+        'F#2 F#2 F#3 F#2 F#2 F#2 F#3 F#2 | E2 E2 E3 E2 D2 . E2 .',
+        'D2 D2 D3 D2 B1 B1 B2 B1 | C#2 C#2 C#3 C#2 F2 . G#2 .',
+        'A1 A1 A2 A1 B1 B1 B2 B1 | C#2 C#2 C#3 C#2 E2 . D2 .',
+        'D2 D2 D3 D2 B1 B1 B2 B1 | C#2 C#2 C#3 C#2 F2 . C#2 .',
+      ].join(' | '),
+      [
+        'F#4 A4 C#5 F#5 C#5 A4 F#4 C#5 | E4 G#4 B4 E5 D4 F#4 A4 D5',
+        'D4 F#4 A4 D5 B3 D4 F#4 B4 | C#4 F4 G#4 C#5 G#4 F4 C#4 G#4',
+        'A3 C#4 E4 A4 B3 D4 F#4 B4 | C#4 E4 G#4 C#5 E4 G#4 B4 E5',
+        'D4 F#4 A4 D5 B3 D4 F#4 B4 | C#4 F4 G#4 C#5 F4 G#4 C#5 F5',
+      ].join(' | '),
+      [
+        'C.K.S.K.K.K.S.AH',
+        'K.K.S.K.T.t.S.A.',
+        'C.K.S.K.K.K.S.AH',
+        'K.S.K.S.T.t.R.H.',
+      ].join(' | '),
+    ),
+  },
+
+  // --------------------------------------------------------------------------
+  // 15. bgm_final_3 — Orbital Spire Zenith (166 BPM, E minor heroic finale)
+  // --------------------------------------------------------------------------
+  bgm_final_3: {
+    bpm: 166,
+    loop: true,
+    leadGain: 0.27,
+    bassGain: 0.31,
+    arpGain: 0.16,
+    drumGain: 0.34,
+    leadStyle: 'pulse25',
+    arpStyle: 'pulse12',
+    echoMix: 0.16,
+    intro: makeSection(
+      [
+        'B5 . E6 . F#6 - G6 . | F#6 . E6 . D6 . B5 .',
+        'C6 . B5 . A5 . G5 . | F#5 - A5 . B5 - D#6 .',
+      ].join(' | '),
+      [
+        'E2 E2 E3 E2 D2 D2 D3 D2 | C2 C2 C3 C2 B1 . D2 .',
+        'A1 A1 A2 A1 C2 C2 C3 C2 | B1 B1 B2 B1 D#2 . F#2 .',
+      ].join(' | '),
+      [
+        'E4 G4 B4 E5 D4 F#4 A4 D5 | C4 E4 G4 C5 B3 D4 G4 B4',
+        'A3 C4 E4 A4 C4 E4 G4 C5 | B3 D#4 F#4 B4 D#4 F#4 B4 D#5',
+      ].join(' | '),
+      [
+        'C.K.S.K.K.K.S.hH',
+        'K.K.S.K.T.t.R.R.',
+      ].join(' | '),
+    ),
+    main: makeSection(
+      [
+        'E5 . B5 . E6 - D6 . | C6 . B5 . A5 - G5 .',
+        'A5 . C6 . E6 - D6 . | B5 - A5 . F#5 - B5 .',
+        'G5 . B5 . D6 - G6 . | F#6 . E6 . D6 - C6 .',
+        'B5 . C6 . D6 - E6 . | F#6 - D#6 . B5 - . .',
+      ].join(' | '),
+      [
+        'E2 E2 E3 E2 E2 E2 E3 E2 | C2 C2 C3 C2 C2 . D2 .',
+        'A1 A1 A2 A1 A1 . C2 . | B1 B1 B2 B1 D#2 . B1 .',
+        'G2 G2 G3 G2 G2 G2 G3 G2 | D2 D2 D3 D2 C2 . D2 .',
+        'C2 C2 C3 C2 A1 A1 A2 A1 | B1 B1 B2 B1 D#2 . F#2 .',
+      ].join(' | '),
+      [
+        'E4 G4 B4 E5 B4 G4 E4 B4 | C4 E4 G4 C5 G4 E4 C4 G4',
+        'A3 C4 E4 A4 E4 C4 A3 E4 | B3 D#4 F#4 B4 F#4 D#4 B3 F#4',
+        'G4 B4 D5 G5 D5 B4 G4 D5 | D4 F#4 A4 D5 C4 E4 G4 C5',
+        'C4 E4 G4 C5 A3 C4 E4 A4 | B3 D#4 F#4 B4 D#4 F#4 B4 D#5',
+      ].join(' | '),
+      [
+        'C.K.S.K.K.K.S.hH',
+        'K.K.S.K.K.K.T.t.',
+        'C.K.S.K.K.K.S.hH',
+        'K.K.S.T.t.S.R.H.',
+      ].join(' | '),
+    ),
+  },
+
+  // --------------------------------------------------------------------------
+  // 16. bgm_boss_opening — Armored Siege Intercept (164 BPM, C minor)
   // --------------------------------------------------------------------------
   bgm_boss_opening: {
     bpm: 164,
@@ -414,10 +1051,22 @@ const SONGS: Readonly<Record<BgmKey, SongComposition>> = {
     arpStyle: 'pulse12',
     echoMix: 0.12,
     intro: makeSection(
-      'C5 . C5 . F#5 - . . | C5 . C5 . G5 . F#5 .',
-      'C2 C2 C2 C2 F#2 . C2 . | C2 C2 C2 C2 G2 . F#2 .',
-      'C4 Eb4 G4 C5 C4 Eb4 F#4 C5 | C4 Eb4 G4 C5 G4 F#4 Eb4 C4',
-      'C.K.S.K.T.t.R.R.',
+      [
+        'C5 . C5 . F#5 - . . | C5 . C5 . G5 . F#5 .',
+        'Eb5 . D5 . C5 . Bb4 . | G5 - F#5 . G5 - B5 .',
+      ].join(' | '),
+      [
+        'C2 C2 C2 C2 F#2 . C2 . | C2 C2 C2 C2 G2 . F#2 .',
+        'Ab1 Ab1 Ab2 Ab1 F1 . Ab1 . | G1 G1 G2 G1 B1 . G1 .',
+      ].join(' | '),
+      [
+        'C4 Eb4 G4 C5 C4 Eb4 F#4 C5 | C4 Eb4 G4 C5 G4 F#4 Eb4 C4',
+        'Ab3 C4 Eb4 Ab4 F3 Ab3 C4 F4 | G3 B3 D4 G4 B3 D4 G4 B4',
+      ].join(' | '),
+      [
+        'C.K.S.A.K.K.S.A.',
+        'K.K.S.K.T.t.R.R.',
+      ].join(' | '),
     ),
     main: makeSection(
       [
@@ -439,16 +1088,16 @@ const SONGS: Readonly<Record<BgmKey, SongComposition>> = {
         'F#3 A3 C4 F#4 F3 Ab3 C4 F4 | G3 B3 D4 G4 B3 D4 G4 B4',
       ].join(' | '),
       [
-        'C.K.S.K.K.K.S.hH',
+        'C.K.S.K.K.K.S.AH',
         'K.K.S.K.T.t.S.R.',
-        'C.K.S.K.K.K.S.hH',
+        'C.K.S.K.K.K.S.AH',
         'K.S.K.S.T.t.R.H.',
       ].join(' | '),
     ),
   },
 
   // --------------------------------------------------------------------------
-  // 6. bgm_boss_master — Intense Circuit Master duel (168 BPM, E minor)
+  // 17. bgm_boss_master — Circuit Master Showdown (168 BPM, E minor)
   // --------------------------------------------------------------------------
   bgm_boss_master: {
     bpm: 168,
@@ -461,10 +1110,22 @@ const SONGS: Readonly<Record<BgmKey, SongComposition>> = {
     arpStyle: 'pulse12',
     echoMix: 0.14,
     intro: makeSection(
-      'E5 F#5 G5 A5 B5 A5 G5 F#5 | E5 G5 B5 E6 D6 B5 A5 G5',
-      'E2 E2 E3 E2 E2 E2 E3 E2 | D2 D2 D3 D2 B1 B1 D2 B1',
-      'E4 G4 B4 E5 G4 B4 E5 G5 | D4 F#4 A4 D5 B3 D4 F#4 B4',
-      'C.K.S.T.t.S.R.R.',
+      [
+        'E5 F#5 G5 A5 B5 A5 G5 F#5 | E5 G5 B5 E6 D6 B5 A5 G5',
+        'C6 B5 A5 G5 F#5 G5 A5 C6 | B5 - - . D#6 . B5 .',
+      ].join(' | '),
+      [
+        'E2 E2 E3 E2 E2 E2 E3 E2 | D2 D2 D3 D2 B1 B1 D2 B1',
+        'C2 C2 C3 C2 A1 A1 A2 A1 | B1 B1 B2 B1 D#2 . F#2 .',
+      ].join(' | '),
+      [
+        'E4 G4 B4 E5 G4 B4 E5 G5 | D4 F#4 A4 D5 B3 D4 F#4 B4',
+        'C4 E4 G4 C5 A3 C4 E4 A4 | B3 D#4 F#4 B4 D#4 F#4 B4 D#5',
+      ].join(' | '),
+      [
+        'C.K.S.K.K.K.S.hH',
+        'K.K.S.T.t.S.R.R.',
+      ].join(' | '),
     ),
     main: makeSection(
       [
@@ -495,257 +1156,8 @@ const SONGS: Readonly<Record<BgmKey, SongComposition>> = {
   },
 
   // --------------------------------------------------------------------------
-  // 7. bgm_stage_clear — Crisp victory fanfare (154 BPM, C major, one-shot)
+  // 18. bgm_boss_final_1 — Mirror Signal Duel (166 BPM, C# minor rival duel)
   // --------------------------------------------------------------------------
-  bgm_stage_clear: {
-    bpm: 154,
-    loop: false,
-    leadGain: 0.28,
-    bassGain: 0.26,
-    arpGain: 0.16,
-    drumGain: 0.3,
-    leadStyle: 'pulse25',
-    arpStyle: 'pulse12',
-    echoMix: 0.18,
-    main: makeSection(
-      'C5 E5 G5 C6 . G5 A5 B5 | C6 - - - - - - .',
-      'C2 . G2 . C3 . G2 . | C2 - - - - - - .',
-      'C4 E4 G4 C5 E4 G4 C5 E5 | C5 G5 E5 C6 - - - .',
-      'K.S.K.R.C...H...',
-    ),
-  },
-
-  // --------------------------------------------------------------------------
-  // 8. bgm_gameover — Dramatic power-down cadence (135 BPM, D minor, one-shot)
-  // --------------------------------------------------------------------------
-  bgm_gameover: {
-    bpm: 135,
-    loop: false,
-    leadGain: 0.24,
-    bassGain: 0.26,
-    arpGain: 0.14,
-    drumGain: 0.22,
-    leadStyle: 'triangle',
-    arpStyle: 'triangle',
-    echoMix: 0.22,
-    main: makeSection(
-      'A5 - G5 . F5 - E5 . | D5 - - . A4 - D4 -',
-      'D2 - C2 . Bb1 - A1 . | D2 - - - D1 - - .',
-      'D4 F4 A4 . C4 E4 G4 . | Bb3 D4 F4 . A3 D4 F4 .',
-      'K.S.K.S.C...t...',
-    ),
-  },
-
-  // --------------------------------------------------------------------------
-  // 9..23 Remaining Stage & Final Boss Themes (Unique Motifs — Never Silent!)
-  // --------------------------------------------------------------------------
-  bgm_tutorial: {
-    bpm: 138,
-    loop: true,
-    leadGain: 0.22,
-    bassGain: 0.24,
-    arpGain: 0.14,
-    drumGain: 0.25,
-    leadStyle: 'pulse25',
-    arpStyle: 'triangle',
-    echoMix: 0.12,
-    main: makeSection(
-      'G5 . B5 . D6 - B5 . | A5 . G5 . E5 - D5 . | C5 . E5 . G5 - A5 . | B5 - A5 . G5 - . .',
-      'G2 . G3 . G2 . D3 . | E2 . E3 . E2 . B2 . | C2 . C3 . C2 . G2 . | D2 . D3 . D2 . F#2 .',
-      'G4 B4 D5 G5 D5 B4 G4 D5 | E4 G4 B4 E5 B4 G4 E4 B4 | C4 E4 G4 C5 G4 E4 C4 G4 | D4 F#4 A4 D5 A4 F#4 D4 A4',
-      'C.h.S.h.K.hKS.h. | K.h.S.h.K.K.T.t.',
-    ),
-  },
-
-  bgm_patch: {
-    bpm: 144,
-    loop: true,
-    leadGain: 0.24,
-    bassGain: 0.3,
-    arpGain: 0.14,
-    drumGain: 0.32,
-    leadStyle: 'saw',
-    arpStyle: 'pulse12',
-    echoMix: 0.12,
-    main: makeSection(
-      'A4 . C5 . E5 - D5 . | C5 . A4 . G4 . A4 . | F4 . A4 . C5 - B4 . | E5 - D5 . C5 . B4 .',
-      'A1 A1 A2 A1 A1 . G1 . | A1 A1 A2 A1 E2 . G1 . | F1 F1 F2 F1 F1 . G1 . | E1 E1 E2 E1 G1 . E1 .',
-      'A3 C4 E4 A4 E4 C4 A3 E4 | A3 C4 E4 A4 G3 B3 D4 G4 | F3 A3 C4 F4 C4 A3 F3 C4 | E3 G#3 B3 E4 B3 G#3 E3 B3',
-      'C.h.S.h.K.K.S.hH | K.h.S.h.T.t.R.H.',
-    ),
-  },
-
-  bgm_cooler: {
-    bpm: 142,
-    loop: true,
-    leadGain: 0.22,
-    bassGain: 0.26,
-    arpGain: 0.16,
-    drumGain: 0.26,
-    leadStyle: 'pulse12',
-    arpStyle: 'triangle',
-    echoMix: 0.2,
-    main: makeSection(
-      'Eb5 . Gb5 . Bb5 - Ab5 . | Gb5 . F5 . Eb5 - Db5 . | Cb5 . Eb5 . Gb5 - Ab5 . | Bb5 - Ab5 . Gb5 . F5 .',
-      'Eb2 . Eb3 Eb2 Eb2 . Db2 . | Eb2 . Eb3 Eb2 Gb2 . F2 . | B1 . B2 B1 B1 . Db2 . | Bb1 . Bb2 Bb1 Db2 . Bb1 .',
-      'Eb4 Gb4 Bb4 Eb5 Bb4 Gb4 Eb4 Bb4 | Eb4 Gb4 Bb4 Eb5 Db4 F4 Ab4 Db5 | B3 Eb4 Gb4 B4 Gb4 Eb4 B3 Gb4 | Bb3 D4 F4 Bb4 F4 D4 Bb3 F4',
-      'C.h.S.h.K.hKS.hH | K.h.S.h.K.T.t.H.',
-    ),
-  },
-
-  bgm_elec: {
-    bpm: 156,
-    loop: true,
-    leadGain: 0.25,
-    bassGain: 0.3,
-    arpGain: 0.16,
-    drumGain: 0.32,
-    leadStyle: 'pulse25',
-    arpStyle: 'pulse12',
-    echoMix: 0.14,
-    main: makeSection(
-      'B4 D5 F#5 B5 A5 F#5 D5 F#5 | G5 . F#5 . E5 . D5 . | E5 G5 B5 E6 D6 B5 G5 B5 | F#5 - E5 . D5 . C#5 .',
-      'B1 B1 B2 B1 B1 B1 B2 B1 | G1 G1 G2 G1 A1 . B1 . | E2 E2 E3 E2 E2 E2 E3 E2 | F#1 F#1 F#2 F#1 F#1 . A#1 .',
-      'B3 D4 F#4 B4 F#4 D4 B3 F#4 | G3 B3 D4 G4 A3 C#4 E4 A4 | E4 G4 B4 E5 B4 G4 E4 B4 | F#3 A#3 C#4 F#4 C#4 A#3 F#3 C#4',
-      'C.hKS.h.K.hKS.hH | K.hKS.h.T.t.R.H.',
-    ),
-  },
-
-  bgm_shift: {
-    bpm: 152,
-    loop: true,
-    leadGain: 0.24,
-    bassGain: 0.28,
-    arpGain: 0.15,
-    drumGain: 0.3,
-    leadStyle: 'pulse25',
-    arpStyle: 'saw',
-    echoMix: 0.14,
-    main: makeSection(
-      'F5 - Ab5 . C6 - Bb5 . | Ab5 . G5 . F5 . Eb5 . | Db5 - F5 . Ab5 - G5 . | C6 - Bb5 . G5 - . .',
-      'F2 F2 F3 F2 F2 . Eb2 . | F2 F2 F3 F2 Ab2 . G2 . | Db2 Db2 Db3 Db2 Db2 . Eb2 . | C2 C2 C3 C2 E2 . C2 .',
-      'F4 Ab4 C5 F5 C5 Ab4 F4 C5 | F4 Ab4 C5 F5 Eb4 G4 Bb4 Eb5 | Db4 F4 Ab4 Db5 Ab4 F4 Db4 Ab4 | C4 E4 G4 C5 G4 E4 C4 G4',
-      'C.h.S.h.K.hKS.hH | K.K.S.h.T.t.R.H.',
-    ),
-  },
-
-  bgm_wave: {
-    bpm: 148,
-    loop: true,
-    leadGain: 0.24,
-    bassGain: 0.28,
-    arpGain: 0.16,
-    drumGain: 0.3,
-    leadStyle: 'pulse12',
-    arpStyle: 'pulse12',
-    echoMix: 0.18,
-    main: makeSection(
-      'C#5 . E5 . G#5 - F#5 . | E5 . D#5 . C#5 - B4 . | A4 . C#5 . E5 - F#5 . | G#5 - F#5 . D#5 - . .',
-      'C#2 C#2 C#3 C#2 C#2 . B1 . | C#2 C#2 C#3 C#2 E2 . D#2 . | A1 A1 A2 A1 A1 . B1 . | G#1 G#1 G#2 G#1 B1 . G#1 .',
-      'C#4 E4 G#4 C#5 G#4 E4 C#4 G#4 | C#4 E4 G#4 C#5 B3 D#4 F#4 B4 | A3 C#4 E4 A4 E4 C#4 A3 E4 | G#3 C4 D#4 G#4 D#4 C4 G#3 D#4',
-      'C.h.S.h.K.hKS.hH | K.hKS.h.T.t.R.H.',
-    ),
-  },
-
-  bgm_break: {
-    bpm: 140,
-    loop: true,
-    leadGain: 0.25,
-    bassGain: 0.32,
-    arpGain: 0.13,
-    drumGain: 0.34,
-    leadStyle: 'saw',
-    arpStyle: 'triangle',
-    echoMix: 0.11,
-    main: makeSection(
-      'G4 - Bb4 . D5 - C5 . | Bb4 . A4 . G4 - F4 . | Eb4 - G4 . Bb4 - A4 . | D5 - C5 . A4 - F#4 .',
-      'G1 G1 G2 G1 G1 . F1 . | G1 G1 G2 G1 Bb1 . A1 . | Eb1 Eb1 Eb2 Eb1 Eb1 . F1 . | D1 D1 D2 D1 F#1 . D1 .',
-      'G3 Bb3 D4 G4 D4 Bb3 G3 D4 | G3 Bb3 D4 G4 F3 A3 C4 F4 | Eb3 G3 Bb3 Eb4 Bb3 G3 Eb3 Bb3 | D3 F#3 A3 D4 A3 F#3 D3 A3',
-      'C.K.S.h.K.K.S.t. | K.K.S.K.T.t.R.H.',
-    ),
-  },
-
-  bgm_cipher: {
-    bpm: 154,
-    loop: true,
-    leadGain: 0.23,
-    bassGain: 0.28,
-    arpGain: 0.16,
-    drumGain: 0.3,
-    leadStyle: 'pulse12',
-    arpStyle: 'pulse12',
-    echoMix: 0.17,
-    main: makeSection(
-      'Ab5 . B5 . Eb6 - Db6 . | B5 . Bb5 . Ab5 - Gb5 . | E5 . Ab5 . B5 - Db6 . | Eb6 - Db6 . Bb5 - . .',
-      'Ab1 Ab1 Ab2 Ab1 Ab1 . Gb1 . | Ab1 Ab1 Ab2 Ab1 B1 . Bb1 . | E1 E1 E2 E1 E1 . Gb1 . | Eb1 Eb1 Eb2 Eb1 G1 . Eb1 .',
-      'Ab4 B4 Eb5 Ab5 Eb5 B4 Ab4 Eb5 | Ab4 B4 Eb5 Ab5 Gb4 Bb4 Db5 Gb5 | E4 Ab4 B4 E5 B4 Ab4 E4 B4 | Eb4 G4 Bb4 Eb5 Bb4 G4 Eb4 Bb4',
-      'C.hKS.h.K.hKS.hH | K.h.S.T.t.S.R.H.',
-    ),
-  },
-
-  bgm_final_1: {
-    bpm: 160,
-    loop: true,
-    leadGain: 0.26,
-    bassGain: 0.31,
-    arpGain: 0.15,
-    drumGain: 0.33,
-    leadStyle: 'pulse25',
-    arpStyle: 'pulse12',
-    echoMix: 0.14,
-    main: makeSection(
-      'D5 . A5 . Bb5 - A5 . | G5 . F5 . E5 - D5 . | C5 . G5 . A5 - G5 . | F5 . E5 . A5 - C#6 .',
-      'D2 D2 D3 D2 D2 D2 D3 D2 | Bb1 Bb1 Bb2 Bb1 Bb1 . A1 . | C2 C2 C3 C2 C2 C2 C3 C2 | A1 A1 A2 A1 A1 . C#2 .',
-      'D4 F4 A4 D5 A4 F4 D4 A4 | Bb3 D4 F4 Bb4 F4 D4 Bb3 F4 | C4 E4 G4 C5 G4 E4 C4 G4 | A3 C#4 E4 A4 E4 C#4 A3 E4',
-      'C.K.S.h.K.K.S.hH | K.K.S.T.t.S.R.H.',
-    ),
-  },
-
-  bgm_final_2: {
-    bpm: 162,
-    loop: true,
-    leadGain: 0.26,
-    bassGain: 0.31,
-    arpGain: 0.16,
-    drumGain: 0.33,
-    leadStyle: 'saw',
-    arpStyle: 'pulse12',
-    echoMix: 0.15,
-    main: makeSection(
-      transposePattern(
-        'D5 . A5 . Bb5 - A5 . | G5 . F5 . E5 - D5 . | C5 . G5 . A5 - G5 . | F5 . E5 . A5 - C#6 .',
-        4,
-      ),
-      transposePattern(
-        'D2 D2 D3 D2 D2 D2 D3 D2 | Bb1 Bb1 Bb2 Bb1 Bb1 . A1 . | C2 C2 C3 C2 C2 C2 C3 C2 | A1 A1 A2 A1 A1 . C#2 .',
-        4,
-      ),
-      transposePattern(
-        'D4 F4 A4 D5 A4 F4 D4 A4 | Bb3 D4 F4 Bb4 F4 D4 Bb3 F4 | C4 E4 G4 C5 G4 E4 C4 G4 | A3 C#4 E4 A4 E4 C#4 A3 E4',
-        4,
-      ),
-      'C.K.S.K.K.K.S.hH | K.S.K.S.T.t.R.H.',
-    ),
-  },
-
-  bgm_final_3: {
-    bpm: 166,
-    loop: true,
-    leadGain: 0.27,
-    bassGain: 0.31,
-    arpGain: 0.16,
-    drumGain: 0.34,
-    leadStyle: 'pulse25',
-    arpStyle: 'pulse12',
-    echoMix: 0.16,
-    main: makeSection(
-      'E5 . B5 . E6 - D6 . | C6 . B5 . A5 - G5 . | A5 . C6 . E6 - D6 . | B5 - A5 . F#5 - B5 .',
-      'E2 E2 E3 E2 E2 E2 E3 E2 | C2 C2 C3 C2 C2 . D2 . | A1 A1 A2 A1 A1 . C2 . | B1 B1 B2 B1 D#2 . B1 .',
-      'E4 G4 B4 E5 B4 G4 E4 B4 | C4 E4 G4 C5 G4 E4 C4 G4 | A3 C4 E4 A4 E4 C4 A3 E4 | B3 D#4 F#4 B4 F#4 D#4 B3 F#4',
-      'C.K.S.K.K.K.S.hH | K.K.S.T.t.S.R.H.',
-    ),
-  },
-
   bgm_boss_final_1: {
     bpm: 166,
     loop: true,
@@ -756,14 +1168,55 @@ const SONGS: Readonly<Record<BgmKey, SongComposition>> = {
     leadStyle: 'saw',
     arpStyle: 'pulse12',
     echoMix: 0.14,
+    intro: makeSection(
+      [
+        'C#6 . G#5 . E5 . C#5 . | D#5 . F#5 . G#5 . B5 .',
+        'C#6 . B5 . A5 . G#5 . | G5 . G#5 . C6 - G#5 .',
+      ].join(' | '),
+      [
+        'C#2 C#2 C#3 C#2 B1 B1 B2 B1 | A1 A1 A2 A1 B1 . C#2 .',
+        'F#1 F#1 F#2 F#1 A1 A1 A2 A1 | G#1 G#1 G#2 G#1 C2 . G#1 .',
+      ].join(' | '),
+      [
+        'C#4 E4 G#4 C#5 B3 D#4 F#4 B4 | A3 C#4 E4 A4 B3 D#4 F#4 B4',
+        'F#3 A3 C#4 F#4 A3 C#4 E4 A4 | G#3 C4 D#4 G#4 C4 D#4 G#4 C5',
+      ].join(' | '),
+      [
+        'C.K.S.K.K.K.S.hH',
+        'K.S.K.S.T.t.R.R.',
+      ].join(' | '),
+    ),
     main: makeSection(
-      'C#5 . E5 . G#5 . B5 . | C#6 - B5 . A5 . G#5 . | F#5 . A5 . C#6 . B5 . | G#5 - F#5 . D#5 . G#5 .',
-      'C#2 C#2 C#3 C#2 C#2 C#2 C#3 C#2 | A1 A1 A2 A1 B1 . C#2 . | F#1 F#1 F#2 F#1 F#1 . A1 . | G#1 G#1 G#2 G#1 C2 . G#1 .',
-      'C#4 E4 G#4 C#5 G#4 E4 C#4 G#4 | A3 C#4 E4 A4 B3 D#4 F#4 B4 | F#3 A3 C#4 F#4 C#4 A3 F#3 C#4 | G#3 C4 D#4 G#4 D#4 C4 G#3 D#4',
-      'C.K.S.K.K.K.S.hH | K.S.T.t.S.R.R.H.',
+      [
+        'C#5 . E5 . G#5 . B5 . | C#6 - B5 . A5 . G#5 .',
+        'F#5 . A5 . C#6 . B5 . | G#5 - F#5 . D#5 . G#5 .',
+        'E5 . G#5 . B5 . E6 . | D#6 - C#6 . B5 . A5 .',
+        'G#5 . A5 . B5 . C#6 . | C6 - G#5 . D#5 - G#5 .',
+      ].join(' | '),
+      [
+        'C#2 C#2 C#3 C#2 C#2 C#2 C#3 C#2 | A1 A1 A2 A1 B1 . C#2 .',
+        'F#1 F#1 F#2 F#1 F#1 . A1 . | G#1 G#1 G#2 G#1 C2 . G#1 .',
+        'E2 E2 E3 E2 E2 E2 E3 E2 | B1 B1 B2 B1 A1 . G#1 .',
+        'F#1 F#1 F#2 F#1 A1 A1 A2 A1 | G#1 G#1 G#2 G#1 C2 . D#2 .',
+      ].join(' | '),
+      [
+        'C#4 E4 G#4 C#5 G#4 E4 C#4 G#4 | A3 C#4 E4 A4 B3 D#4 F#4 B4',
+        'F#3 A3 C#4 F#4 C#4 A3 F#3 C#4 | G#3 C4 D#4 G#4 D#4 C4 G#3 D#4',
+        'E4 G#4 B4 E5 B4 G#4 E4 B4 | B3 D#4 F#4 B4 A3 C#4 E4 A4',
+        'F#3 A3 C#4 F#4 A3 C#4 E4 A4 | G#3 C4 D#4 G#4 C4 D#4 G#4 C5',
+      ].join(' | '),
+      [
+        'C.K.S.K.K.K.S.hH',
+        'K.K.S.K.T.t.S.R.',
+        'C.K.S.K.K.K.S.hH',
+        'K.S.T.t.S.R.R.H.',
+      ].join(' | '),
     ),
   },
 
+  // --------------------------------------------------------------------------
+  // 19. bgm_boss_final_2 — Prism Core Overload (164 BPM, Bb minor crystalline)
+  // --------------------------------------------------------------------------
   bgm_boss_final_2: {
     bpm: 164,
     loop: true,
@@ -774,14 +1227,55 @@ const SONGS: Readonly<Record<BgmKey, SongComposition>> = {
     leadStyle: 'pulse12',
     arpStyle: 'pulse12',
     echoMix: 0.18,
+    intro: makeSection(
+      [
+        'Bb5 Db6 F6 Bb6 Ab6 F6 Db6 F6 | Gb6 F6 Eb6 Db6 C6 Db6 Eb6 Gb6',
+        'F6 . Eb6 . Db6 . C6 . | A5 - C6 . F6 - - .',
+      ].join(' | '),
+      [
+        'Bb1 Bb1 Bb2 Bb1 Ab1 Ab1 Ab2 Ab1 | Gb1 Gb1 Gb2 Gb1 Eb1 . Gb1 .',
+        'F1 F1 F2 F1 Gb1 Gb1 Gb2 Gb1 | F1 F1 F2 F1 A1 . C2 .',
+      ].join(' | '),
+      [
+        'Bb4 Db5 F5 Bb5 Ab4 C5 Eb5 Ab5 | Gb4 Bb4 Db5 Gb5 Eb4 Gb4 Bb4 Eb5',
+        'F4 A4 C5 F5 Gb4 Bb4 Db5 Gb5 | F4 A4 C5 F5 A4 C5 F5 A5',
+      ].join(' | '),
+      [
+        'C.B.S.K.K.K.S.BH',
+        'K.K.S.B.T.t.R.R.',
+      ].join(' | '),
+    ),
     main: makeSection(
-      'Bb5 . Db6 . F6 - Eb6 . | Db6 . C6 . Bb5 . Ab5 . | Gb5 . Bb5 . Db6 - C6 . | F6 - Eb6 . C6 - A5 .',
-      'Bb1 Bb1 Bb2 Bb1 Bb1 Bb1 Bb2 Bb1 | Ab1 Ab1 Ab2 Ab1 Ab1 . Bb1 . | Gb1 Gb1 Gb2 Gb1 Gb1 . Ab1 . | F1 F1 F2 F1 A1 . F1 .',
-      'Bb4 Db5 F5 Bb5 F5 Db5 Bb4 F5 | Ab4 C5 Eb5 Ab5 Eb5 C5 Ab4 Eb5 | Gb4 Bb4 Db5 Gb5 Db5 Bb4 Gb4 Db5 | F4 A4 C5 F5 C5 A4 F4 C5',
-      'C.K.S.K.K.K.S.hH | K.K.S.T.t.S.R.H.',
+      [
+        'Bb5 . Db6 . F6 - Eb6 . | Db6 . C6 . Bb5 . Ab5 .',
+        'Gb5 . Bb5 . Db6 - C6 . | F6 - Eb6 . C6 - A5 .',
+        'Bb5 . F6 . Gb6 - F6 . | Eb6 . Db6 . C6 - Bb5 .',
+        'Ab5 . Bb5 . C6 - Db6 . | F6 - C6 . A5 - F5 .',
+      ].join(' | '),
+      [
+        'Bb1 Bb1 Bb2 Bb1 Bb1 Bb1 Bb2 Bb1 | Ab1 Ab1 Ab2 Ab1 Ab1 . Bb1 .',
+        'Gb1 Gb1 Gb2 Gb1 Gb1 . Ab1 . | F1 F1 F2 F1 A1 . F1 .',
+        'Bb1 Bb1 Bb2 Bb1 Gb1 Gb1 Gb2 Gb1 | Eb1 Eb1 Eb2 Eb1 F1 . Gb1 .',
+        'Ab1 Ab1 Ab2 Ab1 Gb1 Gb1 Gb2 Gb1 | F1 F1 F2 F1 A1 . C2 .',
+      ].join(' | '),
+      [
+        'Bb4 Db5 F5 Bb5 F5 Db5 Bb4 F5 | Ab4 C5 Eb5 Ab5 Eb5 C5 Ab4 Eb5',
+        'Gb4 Bb4 Db5 Gb5 Db5 Bb4 Gb4 Db5 | F4 A4 C5 F5 C5 A4 F4 C5',
+        'Bb4 Db5 F5 Bb5 Gb4 Bb4 Db5 Gb5 | Eb4 Gb4 Bb4 Eb5 F4 A4 C5 F5',
+        'Ab4 C5 Eb5 Ab5 Gb4 Bb4 Db5 Gb5 | F4 A4 C5 F5 A4 C5 F5 A5',
+      ].join(' | '),
+      [
+        'C.K.S.B.K.K.S.BH',
+        'K.K.S.K.T.t.S.R.',
+        'C.K.S.B.K.K.S.BH',
+        'K.K.S.T.t.S.R.H.',
+      ].join(' | '),
     ),
   },
 
+  // --------------------------------------------------------------------------
+  // 20. bgm_boss_final_3_p1 — Overlord Apex Phase I (162 BPM, D minor dread)
+  // --------------------------------------------------------------------------
   bgm_boss_final_3_p1: {
     bpm: 162,
     loop: true,
@@ -792,14 +1286,55 @@ const SONGS: Readonly<Record<BgmKey, SongComposition>> = {
     leadStyle: 'saw',
     arpStyle: 'saw',
     echoMix: 0.15,
+    intro: makeSection(
+      [
+        'D5 - . D5 Ab5 - G5 . | F5 - . D5 Eb5 - D5 .',
+        'C#5 . E5 . G5 . Bb5 . | A5 - - . E5 . C#5 .',
+      ].join(' | '),
+      [
+        'D2 D2 D3 D2 Ab1 Ab1 Ab2 Ab1 | G1 G1 G2 G1 Eb1 . D1 .',
+        'A1 A1 A2 A1 G1 G1 G2 G1 | A1 A1 A2 A1 C#2 . A1 .',
+      ].join(' | '),
+      [
+        'D4 F4 Ab4 D5 Ab3 D4 F4 Ab4 | G3 Bb3 D4 G4 Eb3 G3 Bb3 Eb4',
+        'A3 C#4 E4 A4 G3 Bb3 C#4 G4 | A3 C#4 E4 A4 E4 C#4 A3 E4',
+      ].join(' | '),
+      [
+        'C.K.S.A.K.K.S.A.',
+        'K.K.S.K.T.t.R.R.',
+      ].join(' | '),
+    ),
     main: makeSection(
-      'D5 . F5 . Ab5 - G5 . | F5 . D5 . C5 . D5 . | Bb4 . D5 . F5 - E5 . | A5 - G5 . E5 - C#5 .',
-      'D2 D2 D3 D2 D2 D2 D3 D2 | D2 D2 D3 D2 C2 . D2 . | Bb1 Bb1 Bb2 Bb1 Bb1 . G1 . | A1 A1 A2 A1 C#2 . A1 .',
-      'D4 F4 Ab4 D5 Ab4 F4 D4 Ab4 | D4 F4 A4 D5 C4 E4 G4 C5 | Bb3 D4 F4 Bb4 F4 D4 Bb3 F4 | A3 C#4 E4 A4 E4 C#4 A3 E4',
-      'C.K.S.K.K.K.S.hH | K.S.K.S.T.t.R.R.',
+      [
+        'D5 . F5 . Ab5 - G5 . | F5 . D5 . C5 . D5 .',
+        'Bb4 . D5 . F5 - E5 . | A5 - G5 . E5 - C#5 .',
+        'D5 . Ab5 . A5 - G5 . | F5 . G5 . Ab5 - Bb5 .',
+        'A5 - G5 . F5 . E5 . | C#5 - E5 . A5 - G5 .',
+      ].join(' | '),
+      [
+        'D2 D2 D3 D2 D2 D2 D3 D2 | D2 D2 D3 D2 C2 . D2 .',
+        'Bb1 Bb1 Bb2 Bb1 Bb1 . G1 . | A1 A1 A2 A1 C#2 . A1 .',
+        'D2 D2 D3 D2 C2 C2 C3 C2 | Bb1 Bb1 Bb2 Bb1 Ab1 . Bb1 .',
+        'G1 G1 G2 G1 Bb1 Bb1 Bb2 Bb1 | A1 A1 A2 A1 C#2 . E2 .',
+      ].join(' | '),
+      [
+        'D4 F4 Ab4 D5 Ab4 F4 D4 Ab4 | D4 F4 A4 D5 C4 E4 G4 C5',
+        'Bb3 D4 F4 Bb4 F4 D4 Bb3 F4 | A3 C#4 E4 A4 E4 C#4 A3 E4',
+        'D4 F4 Ab4 D5 C4 Eb4 G4 C5 | Bb3 D4 F4 Bb4 Ab3 C4 Eb4 Ab4',
+        'G3 Bb3 D4 G4 Bb3 D4 F4 Bb4 | A3 C#4 E4 A4 C#4 E4 A4 C#5',
+      ].join(' | '),
+      [
+        'C.K.S.K.K.K.S.AH',
+        'K.K.S.K.T.t.S.R.',
+        'C.K.S.K.K.K.S.AH',
+        'K.S.K.S.T.t.R.R.',
+      ].join(' | '),
     ),
   },
 
+  // --------------------------------------------------------------------------
+  // 21. bgm_boss_final_3_p2 — Overlord Apex Final Circuit (168 BPM, E minor)
+  // --------------------------------------------------------------------------
   bgm_boss_final_3_p2: {
     bpm: 168,
     loop: true,
@@ -811,10 +1346,22 @@ const SONGS: Readonly<Record<BgmKey, SongComposition>> = {
     arpStyle: 'pulse12',
     echoMix: 0.16,
     intro: makeSection(
-      'E5 G5 B5 E6 D6 B5 G5 B5 | E6 - F#6 - G6 - F#6 E6',
-      'E2 E2 E3 E2 D2 D2 D3 D2 | C2 C2 C3 C2 B1 B1 D#2 B1',
-      'E4 G4 B4 E5 D4 F#4 A4 D5 | C4 E4 G4 C5 B3 D#4 F#4 B4',
-      'C.K.S.K.T.t.R.R.',
+      [
+        'E5 G5 B5 E6 D6 B5 G5 B5 | E6 - F#6 - G6 - F#6 E6',
+        'D6 C6 B5 A5 G5 A5 B5 D6 | E6 - - . D#6 . B5 .',
+      ].join(' | '),
+      [
+        'E2 E2 E3 E2 D2 D2 D3 D2 | C2 C2 C3 C2 B1 B1 D#2 B1',
+        'A1 A1 A2 A1 G1 G1 G2 G1 | B1 B1 B2 B1 D#2 . F#2 .',
+      ].join(' | '),
+      [
+        'E4 G4 B4 E5 D4 F#4 A4 D5 | C4 E4 G4 C5 B3 D#4 F#4 B4',
+        'A3 C4 E4 A4 G3 B3 D4 G4 | B3 D#4 F#4 B4 D#4 F#4 B4 D#5',
+      ].join(' | '),
+      [
+        'C.K.S.K.K.K.S.hH',
+        'K.K.S.K.T.t.R.R.',
+      ].join(' | '),
     ),
     main: makeSection(
       [
@@ -840,6 +1387,72 @@ const SONGS: Readonly<Record<BgmKey, SongComposition>> = {
         'K.K.S.K.T.t.R.K.',
         'C.K.S.K.K.K.S.hH',
         'K.S.T.t.S.R.R.H.',
+      ].join(' | '),
+    ),
+  },
+
+  // --------------------------------------------------------------------------
+  // 22. bgm_stage_clear — Triumphant Mission Complete Fanfare (154 BPM, C maj)
+  // --------------------------------------------------------------------------
+  bgm_stage_clear: {
+    bpm: 154,
+    loop: false,
+    leadGain: 0.28,
+    bassGain: 0.26,
+    arpGain: 0.16,
+    drumGain: 0.3,
+    leadStyle: 'pulse25',
+    arpStyle: 'pulse12',
+    echoMix: 0.18,
+    main: makeSection(
+      [
+        'C5 E5 G5 C6 . G5 A5 B5 | C6 - G5 . A5 . B5 .',
+        'D6 - C6 . B5 . G5 . | C6 - - - - - - .',
+      ].join(' | '),
+      [
+        'C2 . G2 . C3 . G2 . | F1 . C2 . G1 . D2 .',
+        'Ab1 . Eb2 . Bb1 . F2 . | C2 - - - - - - .',
+      ].join(' | '),
+      [
+        'C4 E4 G4 C5 E4 G4 C5 E5 | F4 A4 C5 F5 G4 B4 D5 G5',
+        'Ab4 C5 Eb5 Ab5 Bb4 D5 F5 Bb5 | C5 E5 G5 C6 - - - .',
+      ].join(' | '),
+      [
+        'K.S.K.R.C.h.S.h.',
+        'K.S.T.t.C...H...',
+      ].join(' | '),
+    ),
+  },
+
+  // --------------------------------------------------------------------------
+  // 23. bgm_gameover — Melancholic Circuit Offline Cadence (135 BPM, D minor)
+  // --------------------------------------------------------------------------
+  bgm_gameover: {
+    bpm: 135,
+    loop: false,
+    leadGain: 0.24,
+    bassGain: 0.26,
+    arpGain: 0.14,
+    drumGain: 0.22,
+    leadStyle: 'triangle',
+    arpStyle: 'triangle',
+    echoMix: 0.22,
+    main: makeSection(
+      [
+        'A5 - G5 . F5 - E5 . | D5 - C5 . Bb4 - A4 .',
+        'G4 - F4 . E4 - C#4 . | D4 - - - - - - .',
+      ].join(' | '),
+      [
+        'D2 - C2 . Bb1 - A1 . | G1 - F1 . Eb1 - D1 .',
+        'G1 - Bb1 . A1 - A1 . | D1 - - - - - - .',
+      ].join(' | '),
+      [
+        'D4 F4 A4 . C4 E4 G4 . | Bb3 D4 F4 . A3 C4 F4 .',
+        'G3 Bb3 D4 . A3 C#4 E4 . | D3 F3 A3 D4 - - - .',
+      ].join(' | '),
+      [
+        'K.h.S.h.K.h.S.h.',
+        'K.T.t.S.C.......',
       ].join(' | '),
     ),
   },
@@ -1388,6 +2001,12 @@ export class ProceduralSynth {
         this.triggerSnare(time, gainLevel * 0.78, dest);
         this.triggerSnare(time + 0.045, gainLevel * 0.92, dest);
         break;
+      case 'A':
+        this.triggerAnvil(time, gainLevel * 0.68, dest);
+        break;
+      case 'B':
+        this.triggerBellRide(time, gainLevel * 0.44, dest);
+        break;
       default:
         break;
     }
@@ -1512,6 +2131,76 @@ export class ProceduralSynth {
     env.connect(dest);
     noise.start(time);
     noise.stop(time + 0.36);
+  }
+
+  private triggerAnvil(time: number, gainLevel: number, dest: AudioNode): void {
+    // Metallic 16-bit foundry anvil / industrial rim-clang
+    const o1 = this.ctx.createOscillator();
+    const o2 = this.ctx.createOscillator();
+    const env = this.ctx.createGain();
+    o1.type = 'square';
+    o2.type = 'triangle';
+    o1.frequency.setValueAtTime(610, time);
+    o1.frequency.exponentialRampToValueAtTime(520, time + 0.065);
+    o2.frequency.setValueAtTime(935, time);
+    o2.frequency.exponentialRampToValueAtTime(790, time + 0.065);
+
+    env.gain.setValueAtTime(gainLevel * 0.65, time);
+    env.gain.exponentialRampToValueAtTime(0.0001, time + 0.085);
+
+    o1.connect(env);
+    o2.connect(env);
+    env.connect(dest);
+    o1.start(time);
+    o2.start(time);
+    o1.stop(time + 0.095);
+    o2.stop(time + 0.095);
+
+    const noise = this.ctx.createBufferSource();
+    noise.buffer = this.noiseBuffer;
+    const bp = this.ctx.createBiquadFilter();
+    bp.type = 'bandpass';
+    bp.frequency.setValueAtTime(3400, time);
+    bp.Q.setValueAtTime(2.6, time);
+    const nEnv = this.ctx.createGain();
+    nEnv.gain.setValueAtTime(gainLevel * 0.55, time);
+    nEnv.gain.exponentialRampToValueAtTime(0.0001, time + 0.06);
+
+    noise.connect(bp);
+    bp.connect(nEnv);
+    nEnv.connect(dest);
+    noise.start(time);
+    noise.stop(time + 0.07);
+  }
+
+  private triggerBellRide(time: number, gainLevel: number, dest: AudioNode): void {
+    // Shimmering 16-bit cyber ride / crystal bell tick
+    const osc = this.ctx.createOscillator();
+    const env = this.ctx.createGain();
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(3120, time);
+    env.gain.setValueAtTime(gainLevel * 0.55, time);
+    env.gain.exponentialRampToValueAtTime(0.0001, time + 0.085);
+
+    osc.connect(env);
+    env.connect(dest);
+    osc.start(time);
+    osc.stop(time + 0.095);
+
+    const noise = this.ctx.createBufferSource();
+    noise.buffer = this.noiseBuffer;
+    const hp = this.ctx.createBiquadFilter();
+    hp.type = 'highpass';
+    hp.frequency.setValueAtTime(6200, time);
+    const nEnv = this.ctx.createGain();
+    nEnv.gain.setValueAtTime(gainLevel * 0.45, time);
+    nEnv.gain.exponentialRampToValueAtTime(0.0001, time + 0.07);
+
+    noise.connect(hp);
+    hp.connect(nEnv);
+    nEnv.connect(dest);
+    noise.start(time);
+    noise.stop(time + 0.08);
   }
 
   // --------------------------------------------------------------------------
